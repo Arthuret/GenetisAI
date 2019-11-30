@@ -101,9 +101,52 @@ public class Population {
 	 * @param du The updater to use
 	 * @param frameNumber The actual frame number
 	 */
-	public void step(DotUpdater du,int frameNumber) {
-		for(Dot d:pop) {
-			du.updateDot(d,frameNumber);
+	public void step(DotUpdater du,int frameNumber,boolean multithread) {
+		//this is the part to multithread
+		if(multithread) {
+			int nbProc = Math.min(Runtime.getRuntime().availableProcessors(),pop.length);
+			Thread[] t = new Thread[nbProc];
+			int nbPT = pop.length/nbProc;
+			int r = pop.length%nbProc;
+			int tmp = 0;
+			for(int i = 0;i < nbProc;i++) {
+				int begin = tmp;
+				tmp+=(i<r)?nbPT+1:nbPT;
+				t[i] = new Thread(new Worker(du,pop,begin,tmp,frameNumber));
+				t[i].start();
+			}
+			System.out.println();
+			for(Thread w:t) {
+				try {
+					w.join();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}else {
+			for(Dot d:pop)
+				du.updateDot(d,frameNumber);
+		}
+	}
+	
+	private class Worker implements Runnable{
+		private Dot[] pop;
+		private int frameNumber;
+		private DotUpdater du;
+		private int begin,end;
+		
+		private Worker(DotUpdater du,Dot[] pop,int begin,int end,int fn) {
+			this.pop = pop;
+			this.frameNumber = fn;
+			this.du = du;
+			this.begin = begin;
+			this.end = end;
+			System.out.print((end-begin)+":"+begin+","+end+"\t");
+		}
+		@Override
+		public void run() {
+			for(int i = begin;i < end;i++)
+				du.updateDot(pop[i],frameNumber);
 		}
 	}
 	

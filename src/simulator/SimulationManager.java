@@ -43,6 +43,7 @@ public class SimulationManager implements Runnable {
 
 	private boolean fill = false, showCount = false;// fill the obstacles, show the number of collisions on the
 													// obstacles
+	private boolean multithread = false;
 
 	private boolean endOfDraw = false;// flag used to signal the end of the call to draw to the physics thread. used
 										// to synchronize the calculations and the render
@@ -251,6 +252,8 @@ public class SimulationManager implements Runnable {
 		y += yp;
 		g.drawString("Pop size:" + set.brainSimuSet.populationSize, 10, y);
 		y += yp;
+		g.drawString("Threading:"+((multithread)?"Multi":"Mono"), 10, y);
+		y += yp;
 		Runtime r = Runtime.getRuntime();
 		long memAll = r.totalMemory();
 		long memUsed = memAll - r.freeMemory();
@@ -287,7 +290,7 @@ public class SimulationManager implements Runnable {
 	 * compute one simulation step (one frame)
 	 */
 	private void simuStep() {
-		pop.step(dup, frameNumber);
+		pop.step(dup, frameNumber, multithread);
 		pop.updateHisto(newHist);
 	}
 
@@ -393,5 +396,9 @@ public class SimulationManager implements Runnable {
 	 */
 	public void toggleHistory() {
 		history = !history;
+	}
+	
+	public void toggleMultiThread() {
+		multithread = !multithread;
 	}
 }

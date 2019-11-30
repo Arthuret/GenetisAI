@@ -49,6 +49,11 @@ public class SimuFrame extends JFrame {
 		limit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4,0));
 		simu.add(limit);
 		limit.addActionListener(e->manager.cycleLimit());
+
+		JMenuItem multithread = new JMenuItem("Tg Multi T");
+		multithread.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, 0));
+		simu.add(multithread);
+		multithread.addActionListener(e->manager.toggleMultiThread());
 		
 		JMenuItem reset = new JMenuItem("Reset");
 		simu.add(reset);
