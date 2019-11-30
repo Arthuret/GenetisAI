@@ -115,7 +115,6 @@ public class Population {
 				t[i] = new Thread(new Worker(du,pop,begin,tmp,frameNumber));
 				t[i].start();
 			}
-			System.out.println();
 			for(Thread w:t) {
 				try {
 					w.join();
@@ -141,7 +140,6 @@ public class Population {
 			this.du = du;
 			this.begin = begin;
 			this.end = end;
-			System.out.print((end-begin)+":"+begin+","+end+"\t");
 		}
 		@Override
 		public void run() {
