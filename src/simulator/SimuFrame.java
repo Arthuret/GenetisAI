@@ -45,6 +45,11 @@ public class SimuFrame extends JFrame {
 		simu.add(st);
 		st.addActionListener(e->manager.advanceOne());
 		
+		JMenuItem sgt = new JMenuItem("Simulate one gen");
+		sgt.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.SHIFT_DOWN_MASK));
+		simu.add(sgt);
+		sgt.addActionListener(e->manager.advanceOneGen());
+		
 		JMenuItem limit = new JMenuItem("Cycle UPS Limit");
 		limit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4,0));
 		simu.add(limit);

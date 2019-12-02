@@ -34,6 +34,7 @@ public class SimulationManager implements Runnable {
 																	// truncated, so the framerate will not be precise
 	private boolean pause = false;// if the simulation is paused
 	private boolean stepCall = false;// ask for one step forward while in pause
+	private boolean stepGenCall = false;// ask for one gen forward while in pause
 	private int frameNumber = 0;// the number of the actual frame
 	private long nbUpLast = 0;// number of physics step in the last second
 
@@ -124,7 +125,7 @@ public class SimulationManager implements Runnable {
 					endOfDraw = false;
 				}
 				// pause management
-				while (pause && !stepCall)
+				while (pause && !stepCall && !stepGenCall)
 					safeSleep(SLEEP_PAUSE_MILLIS);
 				stepCall = false;
 				// test for generation shortcut
@@ -132,6 +133,11 @@ public class SimulationManager implements Runnable {
 					endGen = pop.isAllDead();
 			} while (frameNumber < MAX_FRAME_PER_GEN && !endGen && running);
 			endGen = false;
+			if(stepGenCall) {
+				stepGenCall = false;
+				while(pause && !stepGenCall && !stepCall && running) safeSleep(SLEEP_PAUSE_MILLIS);
+				stepCall = false;
+			}
 
 			// generation management
 			if (running) {
@@ -324,6 +330,13 @@ public class SimulationManager implements Runnable {
 	 */
 	public void advanceOne() {
 		stepCall = true;
+	}
+	
+	/**
+	 * While in pause, simulate the current gen to the end, or the next gen to the end
+	 */
+	public void advanceOneGen() {
+		stepGenCall = true;
 	}
 
 	/**
