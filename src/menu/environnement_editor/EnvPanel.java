@@ -68,16 +68,11 @@ public class EnvPanel extends JPanel implements Scrollable {
 		setSaved(true);
 	}
 
-	public EnvPanel(String file, EnvMenu parent) {// load a terrain directly
-		super();
-		this.parentMenu = parent;
-		init();
-		loadTerrain(new File(file));
-		initTerrain();
-		filePath = new File(file);
-		emplacement = new File(file);
-		historyPush();
-	}
+	/*
+	 * public EnvPanel(File f, EnvMenu parent) {// load a terrain directly super();
+	 * this.parentMenu = parent; init(); loadTerrain(f); initTerrain(); filePath =
+	 * f; emplacement = f.getParentFile(); historyPush(); }
+	 */
 
 	private void init() {
 		this.addMouseListener(new MouseAdapter() {
@@ -366,9 +361,10 @@ public class EnvPanel extends JPanel implements Scrollable {
 		return JOptionPane.showConfirmDialog(this, "This file already exist. Do you want to overwrite it ?",
 				"Overwrite", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
 	}
-	
+
 	/**
 	 * Ask the user to save the changes if needed
+	 * 
 	 * @return true if the action shall continue
 	 */
 	private boolean saveChanges() {
@@ -381,7 +377,7 @@ public class EnvPanel extends JPanel implements Scrollable {
 				return true;
 			}
 			return false;
-		}else
+		} else
 			return true;
 	}
 
@@ -403,12 +399,12 @@ public class EnvPanel extends JPanel implements Scrollable {
 			return;
 		}
 		File f = selectFile(true);
-		if(f != null) {
+		if (f != null) {
 			filePath = f;
 			loadTerrain(f);
 		}
 	}
-	
+
 	private void reset() {
 		historyClear();
 		historyPush();
@@ -444,7 +440,7 @@ public class EnvPanel extends JPanel implements Scrollable {
 		repaint();
 	}
 
-	private void loadTerrain(File terrainFile) {
+	public void loadTerrain(File terrainFile) {
 		try (FileInputStream fis = new FileInputStream(terrainFile)) {
 			this.t = (Terrain) new ObjectInputStream(fis).readObject();
 		} catch (ClassNotFoundException | IOException | ClassCastException e) {
@@ -468,6 +464,7 @@ public class EnvPanel extends JPanel implements Scrollable {
 
 	/**
 	 * Set an element to be selected
+	 * 
 	 * @param index the index of the selected element
 	 */
 	public void setSelectedElement(int index) {
@@ -482,6 +479,7 @@ public class EnvPanel extends JPanel implements Scrollable {
 
 	/**
 	 * Set an element to be visually highlighted (changing color)
+	 * 
 	 * @param index the index of the selected element
 	 */
 	public void setHighLightedElement(int index) {
@@ -510,7 +508,7 @@ public class EnvPanel extends JPanel implements Scrollable {
 		}
 		parentMenu.repaintTable();
 	}
-	
+
 	/**
 	 * Update all datas after an undo/redo operation
 	 */
@@ -553,6 +551,7 @@ public class EnvPanel extends JPanel implements Scrollable {
 
 	/**
 	 * tell the history that the actual version is saved on disk
+	 * 
 	 * @param saved
 	 */
 	private void setSaved(boolean saved) {

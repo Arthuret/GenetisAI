@@ -79,17 +79,24 @@ public class EnvMenu extends JFrame {
 	private static final String PATH_RECTANGLE_SEL_ICO = PATH_RESOURCES + "rectanglesel.png";
 	private static final String PATH_CIRCLE_ICO = PATH_RESOURCES + "cercle.png";
 	private static final String PATH_CIRCLE_SEL_ICO = PATH_RESOURCES + "cerclesel.png";
-	
+
 	private static final String HELP_MESSAGE = "The Selection tool is used to move and modify the elements on the Terrain.\n"
 			+ "    To cycle through stacked elements, click multiple time on the same spot without moving the mouse.\n"
 			+ "The Point tool is used to place points on the Terrain. Thes points will be used as starting and goal points in simulation.\n"
 			+ "The Circle and Rectangle tools are used to create obstacles on the Terrain. They can then be modified with the Selection tool.\n"
 			+ "The left hand board allow for direct modifications of specific properties. It can also be used to select elements.";
-			/*"L'outil Sélectionner permet de déplacer et modifier les éléments du terrain.\n"
-			+ "    Pour cycler à travers des éléments empilés, cliquer plusieurs fois au même endroit en gardant la souris immobile.\n"
-			+ "L'outil Point permet de créer des points d'intérêt sur le terrain. Ces points serviront à désigner des points de départ et d'arrivée dans la simulation.\n"
-			+ "Les outils Cercle et Rectangle permettent de créer des formes servant d'obstacles. Ces formes peuvent par la suite être modifiées par l'outil Sélectionner.\n"
-			+ "Le tableau sur la gauche permet de modifier certaines propriétées directement et précisément. Il permet aussi de sélectionner des éléments.";*/
+	/*
+	 * "L'outil Sélectionner permet de déplacer et modifier les éléments du terrain.\n"
+	 * +
+	 * "    Pour cycler à travers des éléments empilés, cliquer plusieurs fois au même endroit en gardant la souris immobile.\n"
+	 * +
+	 * "L'outil Point permet de créer des points d'intérêt sur le terrain. Ces points serviront à désigner des points de départ et d'arrivée dans la simulation.\n"
+	 * +
+	 * "Les outils Cercle et Rectangle permettent de créer des formes servant d'obstacles. Ces formes peuvent par la suite être modifiées par l'outil Sélectionner.\n"
+	 * +
+	 * "Le tableau sur la gauche permet de modifier certaines propriétées directement et précisément. Il permet aussi de sélectionner des éléments."
+	 * ;
+	 */
 
 	private JMenuItem mntmOpen;
 	private JMenuItem mntmSave;
@@ -100,10 +107,10 @@ public class EnvMenu extends JFrame {
 	private JMenuItem mntmHelp;
 	private JMenuItem mntmUndo;
 	private JMenuItem mntmRedo;
-	
+
 	private JToggleButton tglbtnSelection;
-	
-	private ActionListener actExit = e->envPanel.goBack();
+
+	private ActionListener actExit = e -> envPanel.goBack();
 
 	private void setupMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
@@ -128,7 +135,7 @@ public class EnvMenu extends JFrame {
 		mntmnNew = new JMenuItem("New");
 		mnFile.add(mntmnNew);
 		mntmnNew.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.CTRL_DOWN_MASK));
-		
+
 		mntmExit = new JMenuItem("Exit");
 		mnFile.add(mntmExit);
 		mntmExit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
@@ -138,20 +145,20 @@ public class EnvMenu extends JFrame {
 
 		mntmSize = new JMenuItem("Size");
 		mnTerrain.add(mntmSize);
-		
+
 		mnTerrain.addSeparator();
-		
+
 		mntmUndo = new JMenuItem("Undo");
 		mnTerrain.add(mntmUndo);
 		mntmUndo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_DOWN_MASK));
-		
+
 		mntmRedo = new JMenuItem("Redo");
 		mnTerrain.add(mntmRedo);
 		mntmRedo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_DOWN_MASK));
-		
+
 		JMenu qm = new JMenu("?");
 		menuBar.add(qm);
-		
+
 		mntmHelp = new JMenuItem("Help");
 		qm.add(mntmHelp);
 
@@ -159,26 +166,26 @@ public class EnvMenu extends JFrame {
 	}
 
 	private void setupMenuListener() {
-		mntmSize.addActionListener(e->{
+		mntmSize.addActionListener(e -> {
 			Vector newSize = new ChangeSizeDialog(null, true, envPanel.getT().getWalls()).showChangeSizeDialog();
 			if (newSize != null) {
 				envPanel.changeTerrainSize(newSize);
 				pack();
 			}
 		});
-		
-		mntmUndo.addActionListener(e->envPanel.historyPrevious());
-		mntmRedo.addActionListener(e->envPanel.historyNext());
-		
-		mntmOpen.addActionListener(e->envPanel.open());
-		mntmSave.addActionListener(e->envPanel.save());
-		mntmSaveAs.addActionListener(e->envPanel.saveAs());
-		mntmnNew.addActionListener(e->envPanel.createNew());
+
+		mntmUndo.addActionListener(e -> envPanel.historyPrevious());
+		mntmRedo.addActionListener(e -> envPanel.historyNext());
+
+		mntmOpen.addActionListener(e -> envPanel.open());
+		mntmSave.addActionListener(e -> envPanel.save());
+		mntmSaveAs.addActionListener(e -> envPanel.saveAs());
+		mntmnNew.addActionListener(e -> envPanel.createNew());
 		mntmExit.addActionListener(actExit);
-		
-		mntmHelp.addActionListener(e->showHelp());
+
+		mntmHelp.addActionListener(e -> showHelp());
 	}
-	
+
 	private void showHelp() {
 		JOptionPane.showMessageDialog(this, HELP_MESSAGE, "Help", JOptionPane.INFORMATION_MESSAGE);
 	}
@@ -201,26 +208,26 @@ public class EnvMenu extends JFrame {
 		tglbtnSelection = getImageButton(PATH_SELECTION_ICO, PATH_SELECTION_SEL_ICO, "Selection", sizeIco,
 				"Selection Mode", TAILLE_BUTTON);
 		btnPanel.add(tglbtnSelection);
-		tglbtnSelection.addActionListener(e->envPanel.changeMode(Modes.SELECTION));
+		tglbtnSelection.addActionListener(e -> envPanel.changeMode(Modes.SELECTION));
 		bg.add(tglbtnSelection);
 		tglbtnSelection.setSelected(true);
-		
-		JToggleButton tglbtnPoint = getImageButton(PATH_POINT_ICO, PATH_POINT_SEL_ICO, "Point", sizeIco,
-				"Add a Point", TAILLE_BUTTON);
+
+		JToggleButton tglbtnPoint = getImageButton(PATH_POINT_ICO, PATH_POINT_SEL_ICO, "Point", sizeIco, "Add a Point",
+				TAILLE_BUTTON);
 		btnPanel.add(tglbtnPoint);
-		tglbtnPoint.addActionListener(e->envPanel.changeMode(Modes.POINT));
+		tglbtnPoint.addActionListener(e -> envPanel.changeMode(Modes.POINT));
 		bg.add(tglbtnPoint);
 
 		JToggleButton tglbtnRectangle = getImageButton(PATH_RECTANGLE_ICO, PATH_RECTANGLE_SEL_ICO, "Rectangle", sizeIco,
 				"Add a Rectangle", TAILLE_BUTTON);
 		btnPanel.add(tglbtnRectangle);
-		tglbtnRectangle.addActionListener(e->envPanel.changeMode(Modes.RECTANGLE));
+		tglbtnRectangle.addActionListener(e -> envPanel.changeMode(Modes.RECTANGLE));
 		bg.add(tglbtnRectangle);
 
 		JToggleButton tglbtnCircle = getImageButton(PATH_CIRCLE_ICO, PATH_CIRCLE_SEL_ICO, "Circle", sizeIco,
 				"Add a Circle", TAILLE_BUTTON);
 		btnPanel.add(tglbtnCircle);
-		tglbtnCircle.addActionListener(e->envPanel.changeMode(Modes.CIRCLE));
+		tglbtnCircle.addActionListener(e -> envPanel.changeMode(Modes.CIRCLE));
 		bg.add(tglbtnCircle);
 
 		return btnPanel;
@@ -290,25 +297,25 @@ public class EnvMenu extends JFrame {
 
 		return new JScrollPane(listTable);
 	}
-	
+
 	private static JTable createTable(TableModel model) {
-        return new JTable(model) {
-            @Override
-            public TableCellEditor getDefaultEditor( Class<?> columnClass ) {
-                return new DefaultCellEditor( new JTextField( ) ) {
-                    @Override
-                    public boolean isCellEditable( EventObject anEvent ) {
-                        if( anEvent instanceof KeyEvent ) {
-                            KeyEvent ke = (KeyEvent) anEvent;
-                            if((ke.getModifiersEx( ) & KeyEvent.SHIFT_DOWN_MASK) != KeyEvent.SHIFT_DOWN_MASK )
-                                return false;
-                        }
-                        return super.isCellEditable( anEvent );
-                    }
-                };
-            }
-        };
-    }
+		return new JTable(model) {
+			@Override
+			public TableCellEditor getDefaultEditor(Class<?> columnClass) {
+				return new DefaultCellEditor(new JTextField()) {
+					@Override
+					public boolean isCellEditable(EventObject anEvent) {
+						if (anEvent instanceof KeyEvent) {
+							KeyEvent ke = (KeyEvent) anEvent;
+							if ((ke.getModifiersEx() & KeyEvent.SHIFT_DOWN_MASK) != KeyEvent.SHIFT_DOWN_MASK)
+								return false;
+						}
+						return super.isCellEditable(anEvent);
+					}
+				};
+			}
+		};
+	}
 
 	private JScrollPane setupRightPanel() {
 		JScrollPane panel = new JScrollPane();
@@ -318,7 +325,8 @@ public class EnvMenu extends JFrame {
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
-				if (envPanel.canClose()) dispose();
+				if (envPanel.canClose())
+					dispose();
 			}
 		});
 
@@ -348,6 +356,19 @@ public class EnvMenu extends JFrame {
 		setLocationRelativeTo(null);
 	}
 
+	public EnvMenu(File f) {
+		this();
+		envPanel.loadTerrain(f);
+	}
+
+	/**
+	 * Scale up or down an image to show scaled on screen
+	 * 
+	 * @param srcImg The image to be scaled
+	 * @param w      The width of the output image
+	 * @param h      The height of the output image
+	 * @return The scaled image
+	 */
 	private Image getScaledImage(Image srcImg, int w, int h) {
 		BufferedImage resizedImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2 = resizedImg.createGraphics();
@@ -358,14 +379,17 @@ public class EnvMenu extends JFrame {
 		return resizedImg;
 	}
 
+	/**
+	 * Call a repaint on the properties tables and cancel the current editings
+	 */
 	public void repaintTable() {
 		propTable.repaint();
 		listTable.repaint();
 		TableCellEditor editor = propTable.getCellEditor();
-		if(editor != null)
+		if (editor != null)
 			editor.cancelCellEditing();
 		editor = listTable.getCellEditor();
-		if(editor != null)
+		if (editor != null)
 			editor.cancelCellEditing();
 	}
 
@@ -377,10 +401,10 @@ public class EnvMenu extends JFrame {
 			cards.show(cardPan, LISTID);
 	}
 
-	public void setListElement(List<Obstacle> obs,List<Point> pts) {
-		listModel.setList(obs,pts);
+	public void setListElement(List<Obstacle> obs, List<Point> pts) {
+		listModel.setList(obs, pts);
 	}
-	
+
 	public void historyPush() {
 		envPanel.historyPush();
 		envPanel.repaint();

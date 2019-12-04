@@ -73,6 +73,11 @@ public class AIMenu extends JFrame {
 		}
 	}
 
+	public AIMenu(File f) {
+		this();
+		load(f);
+	}
+
 	private void setupContentPane() {
 		JPanel contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -156,26 +161,38 @@ public class AIMenu extends JFrame {
 	}
 
 	/**
+	 * Select a file using JFileChooser Manage currentDir
+	 * 
+	 * @param open Wheter this is for opening (true) or saving a file (false)
+	 * @return The selected file or null
+	 */
+	private File selectFile(boolean open) {
+		JFileChooser fc = new JFileChooser();
+		fc.setFileFilter(new FileNameExtensionFilter("IA model file (.brntpl)", "brntpl"));
+		fc.setDialogTitle((open) ? "Open" : "Save as");
+		if (currentDir != null)
+			fc.setCurrentDirectory(currentDir);
+		if (((open) ? fc.showOpenDialog(this) : fc.showSaveDialog(this)) == JFileChooser.APPROVE_OPTION) {
+			currentDir = fc.getSelectedFile().getParentFile();
+			if (!open && !fc.getSelectedFile().getAbsolutePath().endsWith(".brntpl")) {
+				return new File(fc.getSelectedFile().getAbsolutePath() + ".brntpl");
+			}
+			return fc.getSelectedFile();
+		}
+		return null;
+	}
+
+	/**
 	 * Let the user choose the location of the file, and check for overwrite, then
 	 * call saver
 	 */
 	private void saveAs() {
-		File selectedFile;
-		JFileChooser fc = new JFileChooser();
-		fc.setFileFilter(new FileNameExtensionFilter("IA model file (.brntpl)", "brntpl"));
-		fc.setDialogTitle("Save as");
-		if (currentDir != null)
-			fc.setCurrentDirectory(currentDir);
-		if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-			if (!fc.getSelectedFile().getAbsolutePath().endsWith(".brntpl"))
-				selectedFile = new File(fc.getSelectedFile().getAbsolutePath() + ".brntpl");
-			else
-				selectedFile = fc.getSelectedFile();
+		File selectedFile = selectFile(false);
+		if (selectedFile != null) {
 			if (selectedFile.exists() && JOptionPane.showConfirmDialog(this,
 					"This file already exist. Do you want to overwrite it ?", "Overwrite", JOptionPane.YES_NO_OPTION,
 					JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION)
 				return;
-			currentDir = selectedFile.getParentFile();
 			saver(selectedFile);
 		}
 	}
@@ -192,8 +209,8 @@ public class AIMenu extends JFrame {
 			oos.flush();
 			currentFile = file;
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, "Error during file save\n" + e.getMessage(),
-					"Save error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Error during file save\n" + e.getMessage(), "Save error",
+					JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		}
 	}
@@ -203,42 +220,39 @@ public class AIMenu extends JFrame {
 	 * capable of reading it
 	 */
 	private void open() {
-		JFileChooser fc = new JFileChooser();
-		fc.setFileFilter(new FileNameExtensionFilter("IA model file (.brntpl)", "brntpl"));
-		fc.setDialogTitle("Open");
-		if (currentDir != null)
-			fc.setCurrentDirectory(currentDir);
-		if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-			currentDir = fc.getSelectedFile().getParentFile();
-			currentFile = fc.getSelectedFile();
-			try (FileInputStream fis = new FileInputStream(currentFile)) {
-				ObjectInputStream ois = new ObjectInputStream(fis);
-				Object o = ois.readObject();
-				ois.close();
-				if (!(o instanceof BrainTemplate))
-					JOptionPane.showMessageDialog(this, "The file is corrupted or do not contain a recognized type",
-							"Read error", JOptionPane.ERROR_MESSAGE);
-				else {
-					BrainTemplate bt = (BrainTemplate) o;
-					boolean found = false;
-					System.out.println(bt);
-					for (Entry<String, BrainConfigPanel> panels : panelMap.entrySet()) {
-						if (panels.getValue().load(bt)) {
-							found = true;
-							cl.show(cardPanel, panels.getKey());
-							break;
-						}
-					}
-					if (!found) {
-						JOptionPane.showMessageDialog(this, "No editor can handle this AI type",
-								"Unrecognized AI type", JOptionPane.ERROR_MESSAGE);
+		File selectedFile = selectFile(true);
+		if (selectedFile != null)
+			load(selectedFile);
+	}
+
+	private void load(File f) {
+		try (FileInputStream fis = new FileInputStream(f)) {
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			Object o = ois.readObject();
+			ois.close();
+			if (!(o instanceof BrainTemplate))
+				JOptionPane.showMessageDialog(this, "The file is corrupted or do not contain a recognized type",
+						"Read error", JOptionPane.ERROR_MESSAGE);
+			else {
+				BrainTemplate bt = (BrainTemplate) o;
+				boolean found = false;
+				System.out.println(bt);
+				for (Entry<String, BrainConfigPanel> panels : panelMap.entrySet()) {
+					if (panels.getValue().load(bt)) {
+						found = true;
+						cl.show(cardPanel, panels.getKey());
+						break;
 					}
 				}
-			} catch (IOException | ClassNotFoundException e) {
-				JOptionPane.showMessageDialog(this, "Error when opening the file\n" + e.getMessage(),
-						"Read error", JOptionPane.ERROR_MESSAGE);
-				e.printStackTrace();
+				if (!found) {
+					JOptionPane.showMessageDialog(this, "No editor can handle this AI type", "Unrecognized AI type",
+							JOptionPane.ERROR_MESSAGE);
+				}
 			}
+		} catch (IOException | ClassNotFoundException e) {
+			JOptionPane.showMessageDialog(this, "Error when opening the file\n" + e.getMessage(), "Read error",
+					JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
 		}
 	}
 
