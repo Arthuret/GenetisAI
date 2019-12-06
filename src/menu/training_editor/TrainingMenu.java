@@ -309,7 +309,7 @@ public class TrainingMenu extends JFrame {
 		SpinnerNumberModel m = new SpinnerNumberModel(0.1, 0.01, 1, 0.01);
 		spinnerSigma.setModel(m);
 		sigmaPanel.add(spinnerSigma);
-		m.addChangeListener(e->brainSimuSet.sigma = m.getNumber().floatValue());
+		m.addChangeListener(e -> brainSimuSet.sigma = m.getNumber().floatValue());
 
 		evolutionPanel.add(Box.createRigidArea(SPACING));
 
@@ -335,7 +335,7 @@ public class TrainingMenu extends JFrame {
 		SpinnerFractionModel spfAB = new SpinnerFractionModel(1000, true, 1000000);
 		spinnerProbaMutAbs.setModel(spfAB);
 		mutParaAbsoPanel.add(spinnerProbaMutAbs);
-		spfAB.addChangeListener(e->brainSimuSet.absMutDivider = spfAB.getDivider());
+		spfAB.addChangeListener(e -> brainSimuSet.absMutDivider = spfAB.getDivider());
 	}
 
 	private void enfantsGui() {
@@ -355,7 +355,7 @@ public class TrainingMenu extends JFrame {
 		SpinnerPercentModel p = new SpinnerPercentModel(50);
 		spinnerPropChild.setModel(p);
 		propEnfantsPanel.add(spinnerPropChild);
-		p.addChangeListener(e->brainSimuSet.childProportion = p.getPercent());
+		p.addChangeListener(e -> brainSimuSet.childProportion = p.getPercent());
 
 		selectionPanel.add(Box.createRigidArea(SPACING));
 
@@ -370,7 +370,7 @@ public class TrainingMenu extends JFrame {
 		cbOrgChild = new JComboBox<ChildOrigin>();
 		cbOrgChild.setModel(new DefaultComboBoxModel<>(ChildOrigin.values()));
 		origineEnfantPanel.add(cbOrgChild);
-		cbOrgChild.addActionListener(e->brainSimuSet.childOrigin = (ChildOrigin) cbOrgChild.getSelectedItem());
+		cbOrgChild.addActionListener(e -> brainSimuSet.childOrigin = (ChildOrigin) cbOrgChild.getSelectedItem());
 	}
 
 	private void setupRight() {
@@ -485,18 +485,28 @@ public class TrainingMenu extends JFrame {
 		rightPanel.add(terrainBtnPanel, gbc_terrainBtnPanel);
 		GridBagLayout gbl_terrainBtnPanel = new GridBagLayout();
 		gbl_terrainBtnPanel.columnWidths = new int[] { 0, 0 };
-		gbl_terrainBtnPanel.rowHeights = new int[] { 0, 0 };
-		gbl_terrainBtnPanel.columnWeights = new double[] { 1.0, Double.MIN_VALUE };
-		gbl_terrainBtnPanel.rowWeights = new double[] { 0.0, Double.MIN_VALUE };
+		gbl_terrainBtnPanel.rowHeights = new int[] { 0 };
+		gbl_terrainBtnPanel.columnWeights = new double[] { 1.0, 1.0};
+		gbl_terrainBtnPanel.rowWeights = new double[] { 0.0 };
 		terrainBtnPanel.setLayout(gbl_terrainBtnPanel);
 
-		JButton btnNouvelleVariation = new JButton("Nouvelle variation");
-		GridBagConstraints gbc_btnNouvelleVariation = new GridBagConstraints();
-		gbc_btnNouvelleVariation.fill = GridBagConstraints.HORIZONTAL;
-		gbc_btnNouvelleVariation.gridx = 0;
-		gbc_btnNouvelleVariation.gridy = 0;
-		terrainBtnPanel.add(btnNouvelleVariation, gbc_btnNouvelleVariation);
-		btnNouvelleVariation.addActionListener(e -> addVariation());
+		JButton btnNewVariation = new JButton("New variation");
+		GridBagConstraints gbc_btnNewVariation = new GridBagConstraints();
+		gbc_btnNewVariation.fill = GridBagConstraints.BOTH;
+		gbc_btnNewVariation.insets = new Insets(0,0,5,0);
+		gbc_btnNewVariation.gridx = 0;
+		gbc_btnNewVariation.gridy = 0;
+		terrainBtnPanel.add(btnNewVariation, gbc_btnNewVariation);
+		btnNewVariation.addActionListener(e -> addVariation());
+
+		JButton btnAllVar = new JButton("Generate all variaitons");
+		GridBagConstraints gbc_btnAllVar = new GridBagConstraints();
+		gbc_btnAllVar.fill = GridBagConstraints.BOTH;
+		gbc_btnAllVar.insets = new Insets(0, 0, 5, 0);
+		gbc_btnAllVar.gridx = 1;
+		gbc_btnAllVar.gridy = 0;
+		terrainBtnPanel.add(btnAllVar, gbc_btnAllVar);
+		btnAllVar.addActionListener(e -> generateAllVars());
 
 		simpleTerrainShower = new SimpleTerrainShower(new Dimension(200, 200), null, null, false, false);
 		GridBagConstraints gbc_simpleTerrainShower = new GridBagConstraints();
@@ -559,6 +569,16 @@ public class TrainingMenu extends JFrame {
 		}
 	}
 
+	private void generateAllVars() {
+		Object path = terrainTree.getLastSelectedPathComponent();
+		
+		if(path instanceof TerrainVariationSet) {
+			TerrainVariationSet tvs = (TerrainVariationSet) path;
+			tvs.generateAllVars();
+			initializeDatas();
+		}
+	}
+
 	/**
 	 * Remove the selected item from the tree (Terrain set or variation)
 	 */
@@ -566,8 +586,7 @@ public class TrainingMenu extends JFrame {
 		Object path = terrainTree.getLastSelectedPathComponent();
 
 		if (path instanceof String) {// root, tout supprimer
-			if (JOptionPane.showConfirmDialog(this,
-					"Remove all variations ?\nAny unsaved data will be lost.",
+			if (JOptionPane.showConfirmDialog(this, "Remove all variations ?\nAny unsaved data will be lost.",
 					"Remove confirm", JOptionPane.OK_CANCEL_OPTION,
 					JOptionPane.WARNING_MESSAGE) == JOptionPane.OK_OPTION) {
 				terrains.terrains.clear();
@@ -620,8 +639,8 @@ public class TrainingMenu extends JFrame {
 					brainSimuSet.brainTemplate = (BrainTemplate) o;
 				} else {
 					JOptionPane.showMessageDialog(this,
-							"File \"" + f.getName() + "\"corrupted or does not contains a known type",
-							"Read error", JOptionPane.ERROR_MESSAGE);
+							"File \"" + f.getName() + "\"corrupted or does not contains a known type", "Read error",
+							JOptionPane.ERROR_MESSAGE);
 					return false;
 				}
 				initializeDatas();
@@ -630,7 +649,7 @@ public class TrainingMenu extends JFrame {
 				JOptionPane.showMessageDialog(this,
 						"The file \"" + f.getName() + "\" does not correspond to the intended content", "Wrong file",
 						JOptionPane.ERROR_MESSAGE);
-				System.out.println(o.getClass().getSuperclass()+"  "+o.getClass()+":"+o);
+				System.out.println(o.getClass().getSuperclass() + "  " + o.getClass() + ":" + o);
 			}
 		} catch (FileNotFoundException e) {
 			JOptionPane.showMessageDialog(this, "File \"" + f.getName() + "\" not found\n" + e.getMessage(),
@@ -723,8 +742,8 @@ public class TrainingMenu extends JFrame {
 	}
 
 	private void saveAs() {
-		File f = selectFile(false, "Save a simulation configuration",
-				"Simulation configuration file (.simconf)", "simconf");
+		File f = selectFile(false, "Save a simulation configuration", "Simulation configuration file (.simconf)",
+				"simconf");
 		saver(f);
 	}
 
@@ -748,8 +767,7 @@ public class TrainingMenu extends JFrame {
 	}
 
 	private void saveAsTerrain() {
-		File f = selectFile(false, "Save a Terrain set", "Terrain set file (.terrainset)",
-				"terrainset");
+		File f = selectFile(false, "Save a Terrain set", "Terrain set file (.terrainset)", "terrainset");
 		saverTerrain(f);
 	}
 
@@ -766,8 +784,8 @@ public class TrainingMenu extends JFrame {
 	}
 
 	private void saveAsBrain() {
-		File f = selectFile(false, "Save a population configuration",
-				"Population configuration file (.brainset)", "brainset");
+		File f = selectFile(false, "Save a population configuration", "Population configuration file (.brainset)",
+				"brainset");
 		saverBrain(f);
 	}
 
@@ -801,8 +819,8 @@ public class TrainingMenu extends JFrame {
 				e.printStackTrace();
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(this,
-						"Error when accessing \"" + f.getName() + "\": Access denied\n" + e.getMessage(),
-						"Write error", JOptionPane.ERROR_MESSAGE);
+						"Error when accessing \"" + f.getName() + "\": Access denied\n" + e.getMessage(), "Write error",
+						JOptionPane.ERROR_MESSAGE);
 				e.printStackTrace();
 			}
 		} else
@@ -811,13 +829,14 @@ public class TrainingMenu extends JFrame {
 	}
 
 	private void startSimulation() {
-		if(terrains.hasVariation()) {
+		if (terrains.hasVariation()) {
 			SimulationManager m = new SimulationManager(dataSet);
 			System.out.println(dataSet.toString());
 			dispose();
 			m.startSimulation();
-		}else {
-			JOptionPane.showMessageDialog(this, "No valid terrain", "Error in simulation launching", JOptionPane.ERROR_MESSAGE);
+		} else {
+			JOptionPane.showMessageDialog(this, "No valid terrain", "Error in simulation launching",
+					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 }

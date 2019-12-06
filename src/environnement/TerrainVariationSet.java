@@ -48,4 +48,15 @@ public class TerrainVariationSet implements Serializable{
 	public void removeVariation(TerrainVariation var) {
 		variations.remove(var);
 	}
+
+	public void generateAllVars() {
+		variations.clear();
+		for(Point d:t.getPoints()) {
+			for(Point o:t.getPoints()) {
+				if(d != o) {
+					variations.add(new TerrainVariation(d, o));
+				}
+			}
+		}
+	}
 }
