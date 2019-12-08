@@ -1,5 +1,7 @@
 package simulator;
 
+import java.io.Serializable;
+
 import environnement.Terrain;
 import environnement.TerrainVariation;
 
@@ -10,7 +12,8 @@ import environnement.TerrainVariation;
  * @author Arthur France
  *
  */
-public class TerrainAndVar {
+public class TerrainAndVar implements Serializable{
+	private static final long serialVersionUID = 1L;
 	public Terrain t;
 	public TerrainVariation tvar;
 	public History hist = null;

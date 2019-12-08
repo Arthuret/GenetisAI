@@ -60,6 +60,11 @@ public class SimuFrame extends JFrame {
 		simu.add(multithread);
 		multithread.addActionListener(e->manager.toggleMultiThread());
 		
+		JMenuItem saveS = new JMenuItem("Save state");
+		saveS.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK));
+		simu.add(saveS);
+		saveS.addActionListener(e->manager.saveState(this));
+		
 		JMenuItem reset = new JMenuItem("Reset");
 		simu.add(reset);
 		reset.addActionListener(e->manager.restart());

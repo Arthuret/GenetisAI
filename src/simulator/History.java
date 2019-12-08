@@ -2,6 +2,7 @@ package simulator;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,13 +13,15 @@ import tools.math.Vector;
  * @author Arthur France
  *
  */
-public class History {
+public class History implements Serializable{
+	private static final long serialVersionUID = 1L;
+
 	private List<Vector> chemin = new ArrayList<>();
 	
 	private boolean old = false;//change the display color
 	
-	private static final Color NEW_C = new Color(0, 64, 0);
-	private static final Color OLD_C = new Color(64, 0, 0);
+	private transient static final Color NEW_C = new Color(0, 64, 0);
+	private transient static final Color OLD_C = new Color(64, 0, 0);
 	
 	public void setOld() {
 		old = true;

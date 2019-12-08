@@ -5,7 +5,16 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.text.DecimalFormat;
+
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import menu.MainMenu;
 import menu.training_editor.SimulationDataSet;
@@ -19,15 +28,13 @@ import tools.math.Vector;
  */
 public class SimulationManager implements Runnable {
 
-	private SimulationDataSet set;
 	private SimuFrame frame;
 	private SimuPane pane;
 
-	private TerrainAndVar current;
-	private History newHist;
 	private boolean running = true;// exit switch
 
-	private int genNumber = 0;// the number of the current generation
+	private SimuState s;
+
 	private int framerate = 60;// the number of frames to display every second
 	private static final int FRAMERATE_UNLIMITED = -2, FRAMERATE_DRAW_LIMITED = -1;
 	private long frameInterval = (int) ((1. / framerate) * 1000);// the interval between 2 frames. This value is
@@ -35,7 +42,6 @@ public class SimulationManager implements Runnable {
 	private boolean pause = false;// if the simulation is paused
 	private boolean stepCall = false;// ask for one step forward while in pause
 	private boolean stepGenCall = false;// ask for one gen forward while in pause
-	private int frameNumber = 0;// the number of the actual frame
 	private long nbUpLast = 0;// number of physics step in the last second
 
 	private boolean restart = false;// request for reinitializing the simulator
@@ -64,7 +70,8 @@ public class SimulationManager implements Runnable {
 	private static DecimalFormat df2 = new DecimalFormat();// idem
 
 	public SimulationManager(SimulationDataSet set) {
-		this.set = set;
+		this.s = new SimuState();
+		this.s.set = set;
 		df1.setMaximumFractionDigits(1);
 		df2.setMaximumFractionDigits(2);
 	}
@@ -79,7 +86,7 @@ public class SimulationManager implements Runnable {
 	public void run() {
 		// Open the window
 		pane = new SimuPane(this);
-		pane.setPreferredSize(set.terrainSets.getMaxSize());
+		pane.setPreferredSize(s.set.terrainSets.getMaxSize());
 		frame = new SimuFrame(pane, this);
 		frame.pack();
 		frame.setLocationRelativeTo(null);
@@ -91,14 +98,14 @@ public class SimulationManager implements Runnable {
 		nextTerrain();
 
 		// seting up the population and timings
-		pop = new Population(set.brainSimuSet, current.tvar.getOrigin().getPosition());
+		pop = new Population(s.set.brainSimuSet, s.current.tvar.getOrigin().getPosition());
 		long nextSecond = System.currentTimeMillis();
 		long nbUp = 0;
 		boolean endGen = false;
 		while (running) {
 			// main loop
 			long nextFrameTime = System.currentTimeMillis();
-			newHist = new History();
+			s.newHist = new History();
 			do {
 				// physic engine
 				simuStep();
@@ -117,7 +124,7 @@ public class SimulationManager implements Runnable {
 				}
 				// call to paint
 				pane.repaint();
-				frameNumber++;
+				s.frameNumber++;
 				// synchronizing with render thread (awt)
 				if (framerate != FRAMERATE_UNLIMITED) {// bypass
 					while (!endOfDraw)
@@ -129,13 +136,14 @@ public class SimulationManager implements Runnable {
 					safeSleep(SLEEP_PAUSE_MILLIS);
 				stepCall = false;
 				// test for generation shortcut
-				if (frameNumber % CHECK_DEAD_MOD == 0)
+				if (s.frameNumber % CHECK_DEAD_MOD == 0)
 					endGen = pop.isAllDead();
-			} while (frameNumber < MAX_FRAME_PER_GEN && !endGen && running);
+			} while (s.frameNumber < MAX_FRAME_PER_GEN && !endGen && running);
 			endGen = false;
-			if(stepGenCall) {
+			if (stepGenCall) {
 				stepGenCall = false;
-				while(pause && !stepGenCall && !stepCall && running) safeSleep(SLEEP_PAUSE_MILLIS);
+				while (pause && !stepGenCall && !stepCall && running)
+					safeSleep(SLEEP_PAUSE_MILLIS);
 				stepCall = false;
 			}
 
@@ -143,17 +151,17 @@ public class SimulationManager implements Runnable {
 			if (running) {
 				genStep();// perform history management only
 				// generate next generation
-				TerrainAndVar old = current;
+				TerrainAndVar old = s.current;
 				nextTerrain();
 				if (restart) {
 					restart = false;
-					pop = new Population(set.brainSimuSet, current.tvar.getOrigin().getPosition());
-					genNumber = 0;
+					pop = new Population(s.set.brainSimuSet, s.current.tvar.getOrigin().getPosition());
+					s.genNumber = 0;
 				} else {
-					pop = pop.getNextGeneration(set.brainSimuSet, old, current.tvar.getOrigin().getPosition());
-					genNumber++;
+					pop = pop.getNextGeneration(s.set.brainSimuSet, old, s.current.tvar.getOrigin().getPosition());
+					s.genNumber++;
 				}
-				frameNumber = 0;
+				s.frameNumber = 0;
 			}
 		}
 		System.out.println("Simulation terminated");
@@ -186,18 +194,18 @@ public class SimulationManager implements Runnable {
 	 *                          frame
 	 */
 	public void draw(Graphics g, Dimension size, long nbFrames, long timeFromLastFrame) {
-		float factor = getFactor(current.t.getWalls(), size);
-		Vector offset = getOffset(factor, current.t.getWalls(), size);
-		current.t.showSimulation(g, current.tvar, factor, offset, fill, showCount);
+		float factor = getFactor(s.current.t.getWalls(), size);
+		Vector offset = getOffset(factor, s.current.t.getWalls(), size);
+		s.current.t.showSimulation(g, s.current.tvar, factor, offset, fill, showCount);
 		if (pop != null)
 			pop.show(g, factor, offset);
 		if (history) {
-			if (current.hist != null)
-				current.hist.show(g, factor, offset);
-			if (newHist != null)
-				newHist.show(g, factor, offset);
+			if (s.current.hist != null)
+				s.current.hist.show(g, factor, offset);
+			if (s.newHist != null)
+				s.newHist.show(g, factor, offset);
 		}
-		hideOutOfBound(g, size, current.t.getWalls(), factor, offset);
+		hideOutOfBound(g, size, s.current.t.getWalls(), factor, offset);
 		if (statShow)
 			showDebug(g, nbFrames, timeFromLastFrame);
 		endOfDraw = true;
@@ -205,7 +213,8 @@ public class SimulationManager implements Runnable {
 
 	/**
 	 * Compute the maximum display factor
-	 * @param sizeT the size of the Terrain
+	 * 
+	 * @param sizeT  the size of the Terrain
 	 * @param window the size of the panel
 	 * @return The maximum applicable display factor
 	 */
@@ -216,9 +225,11 @@ public class SimulationManager implements Runnable {
 	}
 
 	/**
-	 * Compute the display offset to maintain the terrain display in the center of the pane
+	 * Compute the display offset to maintain the terrain display in the center of
+	 * the pane
+	 * 
 	 * @param factor the display factor used
-	 * @param sizeT the size of the Terrain
+	 * @param sizeT  the size of the Terrain
 	 * @param window the size of the panel
 	 * @return the offset to center the display
 	 */
@@ -250,16 +261,17 @@ public class SimulationManager implements Runnable {
 		y += yp;
 		g.drawString("UPS:" + nbUpLast, 10, y);
 		y += yp;
-		g.drawString("Frame:" + frameNumber + "/" + MAX_FRAME_PER_GEN, 10, y);
+		g.drawString("Frame:" + s.frameNumber + "/" + MAX_FRAME_PER_GEN, 10, y);
 		y += yp;
-		g.drawString("Generation:" + genNumber, 10, y);
+		g.drawString("Generation:" + s.genNumber, 10, y);
 		y += yp;
-		g.drawString("Brain type:" + set.brainSimuSet.brainTemplate.getType(), 10, y);
+		g.drawString("Brain type:" + s.set.brainSimuSet.brainTemplate.getType(), 10, y);
 		y += yp;
-		g.drawString("Pop size:" + set.brainSimuSet.populationSize, 10, y);
+		g.drawString("Pop size:" + s.set.brainSimuSet.populationSize, 10, y);
 		y += yp;
-		g.drawString("Threading:"+((multithread)?"Multi":"Mono"), 10, y);
-		g.drawString("Selection:" + set.brainSimuSet.childOrigin,10, y);
+		g.drawString("Threading:" + ((multithread) ? "Multi" : "Mono"), 10, y);
+		y += yp;
+		g.drawString("Selection:" + s.set.brainSimuSet.childOrigin, 10, y);
 		y += yp;
 		Runtime r = Runtime.getRuntime();
 		long memAll = r.totalMemory();
@@ -271,11 +283,13 @@ public class SimulationManager implements Runnable {
 	private static final Color BACKGROUND = Color.DARK_GRAY;
 
 	/**
-	 * Draw rectangles to cover all borders of the display area, to hide any bad obstacle display
-	 * @param g the Graphics object
-	 * @param size the size of the panel
-	 * @param sizeT the size of the terrain
-	 * @param factor the display factor
+	 * Draw rectangles to cover all borders of the display area, to hide any bad
+	 * obstacle display
+	 * 
+	 * @param g       the Graphics object
+	 * @param size    the size of the panel
+	 * @param sizeT   the size of the terrain
+	 * @param factor  the display factor
 	 * @param offsetT the display offset
 	 */
 	private void hideOutOfBound(Graphics g, Dimension size, Vector sizeT, float factor, Vector offsetT) {
@@ -297,16 +311,16 @@ public class SimulationManager implements Runnable {
 	 * compute one simulation step (one frame)
 	 */
 	private void simuStep() {
-		pop.step(dup, frameNumber, multithread);
-		pop.updateHisto(newHist);
+		pop.step(dup, s.frameNumber, multithread);
+		pop.updateHisto(s.newHist);
 	}
 
 	/**
 	 * pass to the next generation
 	 */
 	private void genStep() {
-		newHist.setOld();
-		current.hist = newHist;
+		s.newHist.setOld();
+		s.current.hist = s.newHist;
 	}
 
 	/**
@@ -314,9 +328,9 @@ public class SimulationManager implements Runnable {
 	 * terrain before getting to the next terrain
 	 */
 	private void nextTerrain() {
-		// current = set.terrainSets.nextVar();
-		current = set.terrainSets.nextLowVar();
-		dup = new DotUpdater(current);
+		// s.current = set.terrainSets.nextVar();
+		s.current = s.set.terrainSets.nextLowVar();
+		dup = new DotUpdater(s.current);
 	}
 
 	/**
@@ -332,9 +346,10 @@ public class SimulationManager implements Runnable {
 	public void advanceOne() {
 		stepCall = true;
 	}
-	
+
 	/**
-	 * While in pause, simulate the current gen to the end, or the next gen to the end
+	 * While in pause, simulate the current gen to the end, or the next gen to the
+	 * end
 	 */
 	public void advanceOneGen() {
 		stepGenCall = true;
@@ -342,10 +357,10 @@ public class SimulationManager implements Runnable {
 
 	/**
 	 * Cycle between 60, screen native fps and unlimited. If the screen native fps
-	 * is 60 or below, only cycle between 60 and unlimited
-	 * Two unlimited modes available : drawLimited and draw bypass
-	 * In drawLimited, will wait for the end of draw to continue.
-	 * in draw bypass, will no end for the renderer, and will compute as fast as possible
+	 * is 60 or below, only cycle between 60 and unlimited Two unlimited modes
+	 * available : drawLimited and draw bypass In drawLimited, will wait for the end
+	 * of draw to continue. in draw bypass, will no end for the renderer, and will
+	 * compute as fast as possible
 	 */
 	public void cycleLimit() {
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
@@ -411,8 +426,56 @@ public class SimulationManager implements Runnable {
 	public void toggleHistory() {
 		history = !history;
 	}
-	
+
 	public void toggleMultiThread() {
 		multithread = !multithread;
+	}
+
+	private File currentDir = null;
+
+	private File selectFile(boolean state, SimuFrame f) {
+		JFileChooser fc = new JFileChooser();
+		fc.setFileFilter(new FileNameExtensionFilter(
+				(state) ? "Simulation State File (.simustate)" : "Brain Data File (.braindata)",
+				(state) ? "simustate" : "braindata"));
+		fc.setDialogTitle(
+				(state) ? "Save the actual state of the simulation" : "Save the best brain of the simulation");
+		if (currentDir != null)
+			fc.setCurrentDirectory(currentDir);
+		if (fc.showSaveDialog(f) == JFileChooser.APPROVE_OPTION) {
+			currentDir = fc.getSelectedFile().getParentFile();
+			if (!(fc.getSelectedFile().getName().endsWith((state) ? ".simustate" : ".braindata")))
+				return new File(fc.getSelectedFile() + "." + ((state) ? ".simustate" : ".braindata"));
+			else
+				return fc.getSelectedFile();
+		}
+		return null;
+	}
+
+	public void saveState(SimuFrame fr) {
+		if(!pause && !stepGenCall) {
+			File f;
+			int r = JOptionPane.YES_OPTION;
+			do {
+				f = selectFile(true, fr);
+				if (f.exists())
+					r = JOptionPane.showConfirmDialog(fr,
+							"A file with this name already exixst.\nDo you wish to overwrite it ?", "File overwrite",
+							JOptionPane.YES_NO_CANCEL_OPTION);
+			} while (r != JOptionPane.YES_OPTION && r != JOptionPane.CANCEL_OPTION);
+			if (f != null && r == JOptionPane.YES_OPTION)
+				saverState(f,fr);
+		}
+	}
+
+	private void saverState(File f,JFrame parent) {
+		try (FileOutputStream fos = new FileOutputStream(f)) {
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(s);
+			oos.close();
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(parent, "Error : "+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		}
 	}
 }
