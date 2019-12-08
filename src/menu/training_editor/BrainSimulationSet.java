@@ -12,7 +12,7 @@ public class BrainSimulationSet implements Serializable {
 	public ChangementLaws changeLaw = ChangementLaws.NORMAL_LAW;
 	public float sigma = 0.1f;
 	public int absMutDivider = 1000;
-	public int childProportion = 50;
+	public int keepedProportion = 50;
 	public ChildOrigin childOrigin = ChildOrigin.OLD_GENERATION;
 	
 	public String toString() {
@@ -22,7 +22,7 @@ public class BrainSimulationSet implements Serializable {
 		resp+="loiChang="+changeLaw+";";
 		resp+="sigma="+sigma+";";
 		resp+="absMutDiv="+absMutDivider+";";
-		resp+="childProp="+childProportion+";";
+		resp+="childProp="+keepedProportion+";";
 		resp+="chilsOrg="+childOrigin+";";
 		return resp;
 	}

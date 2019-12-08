@@ -259,6 +259,7 @@ public class SimulationManager implements Runnable {
 		g.drawString("Pop size:" + set.brainSimuSet.populationSize, 10, y);
 		y += yp;
 		g.drawString("Threading:"+((multithread)?"Multi":"Mono"), 10, y);
+		g.drawString("Selection:" + set.brainSimuSet.childOrigin,10, y);
 		y += yp;
 		Runtime r = Runtime.getRuntime();
 		long memAll = r.totalMemory();

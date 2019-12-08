@@ -101,7 +101,7 @@ public class TrainingMenu extends JFrame {
 		cbChangLaw.setSelectedItem(brainSimuSet.changeLaw);
 		spinnerSigma.setValue(brainSimuSet.sigma);
 		spinnerProbaMutAbs.setValue(brainSimuSet.absMutDivider);
-		spinnerPropChild.setValue(brainSimuSet.childProportion);
+		spinnerPropChild.setValue(brainSimuSet.keepedProportion);
 		cbOrgChild.setSelectedItem(brainSimuSet.childOrigin);
 	}
 
@@ -347,15 +347,16 @@ public class TrainingMenu extends JFrame {
 		selectionPanel.add(propEnfantsPanel);
 		propEnfantsPanel.setLayout(new BoxLayout(propEnfantsPanel, BoxLayout.X_AXIS));
 
-		propEnfantsPanel.add(new JLabel("Child proportion :"));
+		propEnfantsPanel.add(new JLabel("Keeped proportion :"));
 
 		propEnfantsPanel.add(Box.createRigidArea(SPACING));
 
 		spinnerPropChild = new JSpinner();
+		spinnerPropChild.setToolTipText("The proportion of dots keeped unmuted from the old generation");
 		SpinnerPercentModel p = new SpinnerPercentModel(50);
 		spinnerPropChild.setModel(p);
 		propEnfantsPanel.add(spinnerPropChild);
-		p.addChangeListener(e -> brainSimuSet.childProportion = p.getPercent());
+		p.addChangeListener(e -> brainSimuSet.keepedProportion = p.getPercent());
 
 		selectionPanel.add(Box.createRigidArea(SPACING));
 

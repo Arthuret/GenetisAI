@@ -1,6 +1,8 @@
 package simulator;
 
 import java.awt.Graphics;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import menu.training_editor.BrainSimulationSet;
@@ -80,8 +82,35 @@ public class Population {
 				d.getBrain().mutate(set);
 			}
 			return new Population(newPop);
+		case REMAINING_POPULATION:
+			//sorting the old population
+			List<DotFit> lpop = new ArrayList<>();
+			for(int i = 0;i < pop.length;i++)
+				lpop.add(new DotFit(pop[i],fitness[i]));
+			lpop.sort((a,b)-> (b.fit > a.fit)?1:(b.fit == a.fit)?0:-1);
+			int size_keep = (int) ((set.keepedProportion/100f)*set.populationSize);
+			//selecting dots
+			for(int i = 0;i < size_keep;i++) {
+				newPop[i] = lpop.get(i).d;
+				newPop[i].reset(nextOrigin);
+			}
+			for(int i = size_keep;i < newPop.length;i++) {
+				newPop[i] = new Dot(newPop[r.nextInt(size_keep)].getBrain().copy(),nextOrigin);
+				newPop[i].getBrain().mutate(set);
+			}
+			return new Population(newPop);
 		}
 		return null;
+	}
+	
+	private class DotFit{
+		private Dot d;
+		private float fit;
+		
+		private DotFit(Dot d,float fit) {
+			this.d = d;
+			this.fit = fit;
+		}
 	}
 	
 	/**
