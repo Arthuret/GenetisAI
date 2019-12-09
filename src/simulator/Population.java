@@ -1,6 +1,7 @@
 package simulator;
 
 import java.awt.Graphics;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -12,8 +13,8 @@ import tools.math.Vector;
  * Contains a population of dots with brains
  * @author Arthur France
  */
-public class Population {
-	
+public class Population implements Serializable{
+	private static final long serialVersionUID = 1L;
 	private Dot[] pop;
 
 	/**

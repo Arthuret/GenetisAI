@@ -1,5 +1,7 @@
 package simulator;
 
+import java.io.Serializable;
+
 import environnement.Point;
 import tools.math.Vector;
 
@@ -8,7 +10,8 @@ import tools.math.Vector;
  * @author Arthur France
  *
  */
-public class DotUpdater {
+public class DotUpdater implements Serializable{
+	private static final long serialVersionUID = 1L;
 	private TerrainAndVar tavar;
 
 	public DotUpdater(TerrainAndVar tavar) {

@@ -11,6 +11,8 @@ import menu.training_editor.BrainSimulationSet;
 import menu.training_editor.SimulationDataSet;
 import menu.training_editor.TerrainSimulationSet;
 import menu.training_editor.TrainingMenu;
+import simulator.SimuState;
+import simulator.SimulationManager;
 import tools.menu.VerticalButtonsMenu;
 
 import javax.swing.JMenuBar;
@@ -75,7 +77,7 @@ public class MainMenu extends VerticalButtonsMenu {
 		JMenuItem mntmOpen = new JMenuItem("Open");
 		mnFile.add(mntmOpen);
 		mntmOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, KeyEvent.CTRL_DOWN_MASK));
-		mntmOpen.addActionListener(e -> open());
+		mntmOpen.addActionListener(e -> open(false));
 
 		JMenuItem mntmCrdits = new JMenuItem("Credits");
 		mnFile.add(mntmCrdits);
@@ -88,10 +90,13 @@ public class MainMenu extends VerticalButtonsMenu {
 
 	private File emplacement = null;
 
-	private void open() {
+	private void open(boolean simu) {
 		JFileChooser fc = new JFileChooser();
-		fc.setFileFilter(new FileNameExtensionFilter("GenetisAI files", "terrain", "brntpl", "terrainset", "simconf",
-				"brainset"));
+		if(!simu)
+			fc.setFileFilter(new FileNameExtensionFilter("GenetisAI files", "terrain", "brntpl", "terrainset", "simconf",
+				"brainset","simustate"));
+		else
+			fc.setFileFilter(new FileNameExtensionFilter("Simulation State file (.simustate)","simustate"));
 		fc.setDialogTitle("Open");
 		if (emplacement != null)
 			fc.setCurrentDirectory(emplacement);
@@ -115,6 +120,12 @@ public class MainMenu extends VerticalButtonsMenu {
 					passTo(new EnvMenu(f));
 				} else if (o instanceof BrainTemplate) {
 					passTo(new AIMenu(f));
+				} else if (o instanceof SimuState) {
+					SimulationManager m = new SimulationManager(null);
+					if(m.load(f, this)) {
+						dispose();
+						m.startSimulation();
+					}
 				} else {
 					JOptionPane.showMessageDialog(this, "Unknown file", "Read error", JOptionPane.ERROR_MESSAGE);
 				}
@@ -141,7 +152,7 @@ public class MainMenu extends VerticalButtonsMenu {
 	 */
 	public MainMenu() {
 		// VerticalButtonMenu constructor
-		super(3, Color.DARK_GRAY, fontBtn);
+		super(4, Color.DARK_GRAY, fontBtn);
 		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 400);
@@ -157,7 +168,7 @@ public class MainMenu extends VerticalButtonsMenu {
 
 		createJButton(new Color(209, 100, 100), "Entrainement").addActionListener(e -> passTo(new TrainingMenu()));
 
-		// createJButton(new Color(255,180,43),"Simulation (TODO)");//will launch a
+		createJButton(new Color(255,180,43),"Simulation").addActionListener(e->open(true));;//will launch a
 		// simulation with the given brains
 	}
 
@@ -165,5 +176,4 @@ public class MainMenu extends VerticalButtonsMenu {
 		dispose();
 		f.setVisible(true);
 	}
-
 }

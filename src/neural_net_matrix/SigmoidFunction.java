@@ -3,8 +3,8 @@ package neural_net_matrix;
 import java.security.InvalidParameterException;
 
 public class SigmoidFunction implements TfFunction {
-	
-	private static final SigmoidFunction f = new SigmoidFunction();//singleton
+	private static final long serialVersionUID = 1L;
+	private transient static final SigmoidFunction f = new SigmoidFunction();//singleton
 	//Created at the loading of the class
 	
 	private SigmoidFunction() {

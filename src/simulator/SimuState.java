@@ -11,4 +11,7 @@ public class SimuState implements Serializable {
 	public SimulationDataSet set;
 	public TerrainAndVar current;
 	public History newHist;
+
+	public Population pop;
+	public DotUpdater dup;
 }

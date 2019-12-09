@@ -6,8 +6,10 @@ import java.awt.Graphics;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.text.DecimalFormat;
 
@@ -33,7 +35,7 @@ public class SimulationManager implements Runnable {
 
 	private boolean running = true;// exit switch
 
-	private SimuState s;
+	private SimuState s = null;
 
 	private int framerate = 60;// the number of frames to display every second
 	private static final int FRAMERATE_UNLIMITED = -2, FRAMERATE_DRAW_LIMITED = -1;
@@ -63,17 +65,32 @@ public class SimulationManager implements Runnable {
 
 	private static final int CHECK_DEAD_MOD = 10;// check for all dots dead every [] frames
 
-	private Population pop;
-	private DotUpdater dup;
-
 	private static DecimalFormat df1 = new DecimalFormat();// used to display memory used
 	private static DecimalFormat df2 = new DecimalFormat();// idem
+	
+	private SimulationDataSet tempSet;
 
 	public SimulationManager(SimulationDataSet set) {
-		this.s = new SimuState();
-		this.s.set = set;
+		this.tempSet = set;
 		df1.setMaximumFractionDigits(1);
 		df2.setMaximumFractionDigits(2);
+	}
+	
+	public boolean load(File f,JFrame parent) {
+		try(FileInputStream fis = new FileInputStream(f)){
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			Object o = ois.readObject();
+			ois.close();
+			if(o instanceof SimuState) {
+				this.s = (SimuState)o;
+				pause = true;
+				return true;
+			}
+		} catch (ClassNotFoundException | IOException e) {
+			JOptionPane.showMessageDialog(parent, "An error occured while reading the file :\n"+e.getMessage(), "Reading error", JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 	public Thread startSimulation() {
@@ -86,6 +103,13 @@ public class SimulationManager implements Runnable {
 	public void run() {
 		// Open the window
 		pane = new SimuPane(this);
+		if(s == null) {
+			this.s = new SimuState();
+			this.s.set = tempSet;
+			// grab an environnement
+			nextTerrain();
+			s.pop = new Population(s.set.brainSimuSet, s.current.tvar.getOrigin().getPosition());
+		}
 		pane.setPreferredSize(s.set.terrainSets.getMaxSize());
 		frame = new SimuFrame(pane, this);
 		frame.pack();
@@ -94,50 +118,50 @@ public class SimulationManager implements Runnable {
 
 		System.out.println("Starting simulation");
 
-		// grab an environnement
-		nextTerrain();
+
 
 		// seting up the population and timings
-		pop = new Population(s.set.brainSimuSet, s.current.tvar.getOrigin().getPosition());
 		long nextSecond = System.currentTimeMillis();
 		long nbUp = 0;
 		boolean endGen = false;
 		while (running) {
 			// main loop
 			long nextFrameTime = System.currentTimeMillis();
-			s.newHist = new History();
+			s.newHist = new History();//TODO
 			do {
 				// physic engine
-				simuStep();
-				nbUp++;
-				// framerate management
-				if (frameInterval != 0) {
-					while (System.currentTimeMillis() < nextFrameTime)
-						safeSleep(SLEEP_WAIT_FRAME_MILLIS);
-					nextFrameTime = System.currentTimeMillis() + frameInterval;
-				}
-				// performance reading
-				if (nextSecond < System.currentTimeMillis()) {
-					nextSecond = System.currentTimeMillis() + 1000;
-					nbUpLast = nbUp;
-					nbUp = 0;
-				}
-				// call to paint
-				pane.repaint();
-				s.frameNumber++;
-				// synchronizing with render thread (awt)
-				if (framerate != FRAMERATE_UNLIMITED) {// bypass
-					while (!endOfDraw)
-						safeSleep(SLEEP_WAIT_DRAW_MILLIS);
-					endOfDraw = false;
+				if(!pause || stepCall || stepGenCall) {
+					simuStep();
+					nbUp++;
+					// framerate management
+					if (frameInterval != 0) {
+						while (System.currentTimeMillis() < nextFrameTime)
+							safeSleep(SLEEP_WAIT_FRAME_MILLIS);
+						nextFrameTime = System.currentTimeMillis() + frameInterval;
+					}
+					// performance reading
+					if (nextSecond < System.currentTimeMillis()) {
+						nextSecond = System.currentTimeMillis() + 1000;
+						nbUpLast = nbUp;
+						nbUp = 0;
+					}
+					// call to paint
+					pane.repaint();
+					s.frameNumber++;
+					// synchronizing with render thread (awt)
+					if (framerate != FRAMERATE_UNLIMITED) {// bypass
+						while (!endOfDraw)
+							safeSleep(SLEEP_WAIT_DRAW_MILLIS);
+						endOfDraw = false;
+					}
 				}
 				// pause management
-				while (pause && !stepCall && !stepGenCall)
-					safeSleep(SLEEP_PAUSE_MILLIS);
 				stepCall = false;
+				while (pause && !stepCall && !stepGenCall && running)
+					safeSleep(SLEEP_PAUSE_MILLIS);
 				// test for generation shortcut
 				if (s.frameNumber % CHECK_DEAD_MOD == 0)
-					endGen = pop.isAllDead();
+					endGen = s.pop.isAllDead();
 			} while (s.frameNumber < MAX_FRAME_PER_GEN && !endGen && running);
 			endGen = false;
 			if (stepGenCall) {
@@ -155,10 +179,10 @@ public class SimulationManager implements Runnable {
 				nextTerrain();
 				if (restart) {
 					restart = false;
-					pop = new Population(s.set.brainSimuSet, s.current.tvar.getOrigin().getPosition());
+					s.pop = new Population(s.set.brainSimuSet, s.current.tvar.getOrigin().getPosition());
 					s.genNumber = 0;
 				} else {
-					pop = pop.getNextGeneration(s.set.brainSimuSet, old, s.current.tvar.getOrigin().getPosition());
+					s.pop = s.pop.getNextGeneration(s.set.brainSimuSet, old, s.current.tvar.getOrigin().getPosition());
 					s.genNumber++;
 				}
 				s.frameNumber = 0;
@@ -197,8 +221,8 @@ public class SimulationManager implements Runnable {
 		float factor = getFactor(s.current.t.getWalls(), size);
 		Vector offset = getOffset(factor, s.current.t.getWalls(), size);
 		s.current.t.showSimulation(g, s.current.tvar, factor, offset, fill, showCount);
-		if (pop != null)
-			pop.show(g, factor, offset);
+		if (s.pop != null)
+			s.pop.show(g, factor, offset);
 		if (history) {
 			if (s.current.hist != null)
 				s.current.hist.show(g, factor, offset);
@@ -311,8 +335,8 @@ public class SimulationManager implements Runnable {
 	 * compute one simulation step (one frame)
 	 */
 	private void simuStep() {
-		pop.step(dup, s.frameNumber, multithread);
-		pop.updateHisto(s.newHist);
+		s.pop.step(s.dup, s.frameNumber, multithread);
+		s.pop.updateHisto(s.newHist);
 	}
 
 	/**
@@ -330,7 +354,7 @@ public class SimulationManager implements Runnable {
 	private void nextTerrain() {
 		// s.current = set.terrainSets.nextVar();
 		s.current = s.set.terrainSets.nextLowVar();
-		dup = new DotUpdater(s.current);
+		s.dup = new DotUpdater(s.current);
 	}
 
 	/**
@@ -389,6 +413,16 @@ public class SimulationManager implements Runnable {
 	 * Stop the simulation and end the thread. Discard all datas.
 	 */
 	public void stop() {
+		boolean currentPause = pause;
+		pause = true;
+		switch(JOptionPane.showConfirmDialog(frame, "All datas will be lost. Do you wish to save the simulation state before exit ?", "Exiting", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE)) {
+		case JOptionPane.YES_OPTION:
+			if(saveState())
+				break;
+		case JOptionPane.CANCEL_OPTION:
+			pause = currentPause;
+			return;
+		}
 		running = false;
 	}
 
@@ -445,37 +479,44 @@ public class SimulationManager implements Runnable {
 		if (fc.showSaveDialog(f) == JFileChooser.APPROVE_OPTION) {
 			currentDir = fc.getSelectedFile().getParentFile();
 			if (!(fc.getSelectedFile().getName().endsWith((state) ? ".simustate" : ".braindata")))
-				return new File(fc.getSelectedFile() + "." + ((state) ? ".simustate" : ".braindata"));
+				return new File(fc.getSelectedFile() + ((state) ? ".simustate" : ".braindata"));
 			else
 				return fc.getSelectedFile();
 		}
 		return null;
 	}
 
-	public void saveState(SimuFrame fr) {
-		if(!pause && !stepGenCall) {
+	public boolean saveState() {
+		boolean currentPause = pause;
+		pause = true;
+		boolean resp = false;
+		if(!stepGenCall) {
 			File f;
 			int r = JOptionPane.YES_OPTION;
 			do {
-				f = selectFile(true, fr);
-				if (f.exists())
-					r = JOptionPane.showConfirmDialog(fr,
+				f = selectFile(true, frame);
+				if (f != null && f.exists())
+					r = JOptionPane.showConfirmDialog(frame,
 							"A file with this name already exixst.\nDo you wish to overwrite it ?", "File overwrite",
 							JOptionPane.YES_NO_CANCEL_OPTION);
-			} while (r != JOptionPane.YES_OPTION && r != JOptionPane.CANCEL_OPTION);
+			} while (f != null && r != JOptionPane.YES_OPTION && r != JOptionPane.CANCEL_OPTION);
 			if (f != null && r == JOptionPane.YES_OPTION)
-				saverState(f,fr);
+				resp = saverState(f);
 		}
+		pause = currentPause;
+		return resp;
 	}
 
-	private void saverState(File f,JFrame parent) {
+	private boolean saverState(File f) {
 		try (FileOutputStream fos = new FileOutputStream(f)) {
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
 			oos.writeObject(s);
 			oos.close();
+			return true;
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(parent, "Error : "+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(frame, "Error : "+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		}
+		return false;
 	}
 }

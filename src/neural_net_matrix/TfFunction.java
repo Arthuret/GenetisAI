@@ -1,5 +1,6 @@
 package neural_net_matrix;
 
+import java.io.Serializable;
 import java.security.InvalidParameterException;
 
 /**
@@ -7,7 +8,7 @@ import java.security.InvalidParameterException;
  * @author Arthur France
  *
  */
-public interface TfFunction {
+public interface TfFunction extends Serializable{
 
 	/**
 	 * Compute the given value with a specific math function

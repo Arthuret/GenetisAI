@@ -2,6 +2,7 @@ package simulator;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.io.Serializable;
 
 import brain.BrainData;
 import tools.math.Vector;
@@ -11,7 +12,8 @@ import tools.math.Vector;
  * @author Arthur France
  *
  */
-public class Dot {
+public class Dot implements Serializable{
+	private static final long serialVersionUID = 1L;
 	private BrainData brain;
 	private Vector position, speed;
 	private boolean isBest = false;// allow different display for the best dot
@@ -20,10 +22,10 @@ public class Dot {
 	
 	private int frameNumber;
 
-	private static final Color DEFAULT_COLOR = Color.DARK_GRAY;
-	private static final Color BEST_COLOR = new Color(0, 128, 0);
-	private static final Color DEAD_COLOR = new Color(128, 0, 0);
-	private static final Color WIN_COLOR = new Color(128, 128, 0);
+	private transient static final Color DEFAULT_COLOR = Color.DARK_GRAY;
+	private transient static final Color BEST_COLOR = new Color(0, 128, 0);
+	private transient static final Color DEAD_COLOR = new Color(128, 0, 0);
+	private transient static final Color WIN_COLOR = new Color(128, 128, 0);
 
 	public Dot(BrainData brain, Vector position) {
 		this.brain = brain;

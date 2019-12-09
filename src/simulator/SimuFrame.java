@@ -63,7 +63,7 @@ public class SimuFrame extends JFrame {
 		JMenuItem saveS = new JMenuItem("Save state");
 		saveS.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK));
 		simu.add(saveS);
-		saveS.addActionListener(e->manager.saveState(this));
+		saveS.addActionListener(e->manager.saveState());
 		
 		JMenuItem reset = new JMenuItem("Reset");
 		simu.add(reset);
