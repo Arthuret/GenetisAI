@@ -69,16 +69,14 @@ public class EnvMenu extends JFrame {
 	private static final int TAILLE_BUTTON = 50;
 	private static final int BUTTON_MARGIN = 5;
 
-	private static final String PATH_RESOURCES = "resources/";
-
-	private static final String PATH_SELECTION_ICO = PATH_RESOURCES + "selection.png";
-	private static final String PATH_SELECTION_SEL_ICO = PATH_RESOURCES + "selectionsel.png";
-	private static final String PATH_POINT_ICO = PATH_RESOURCES + "point.png";
-	private static final String PATH_POINT_SEL_ICO = PATH_RESOURCES + "pointsel.png";
-	private static final String PATH_RECTANGLE_ICO = PATH_RESOURCES + "rectangle.png";
-	private static final String PATH_RECTANGLE_SEL_ICO = PATH_RESOURCES + "rectanglesel.png";
-	private static final String PATH_CIRCLE_ICO = PATH_RESOURCES + "cercle.png";
-	private static final String PATH_CIRCLE_SEL_ICO = PATH_RESOURCES + "cerclesel.png";
+	private static final String PATH_SELECTION_ICO = "selection.png";
+	private static final String PATH_SELECTION_SEL_ICO = "selectionsel.png";
+	private static final String PATH_POINT_ICO = "point.png";
+	private static final String PATH_POINT_SEL_ICO = "pointsel.png";
+	private static final String PATH_RECTANGLE_ICO = "rectangle.png";
+	private static final String PATH_RECTANGLE_SEL_ICO = "rectanglesel.png";
+	private static final String PATH_CIRCLE_ICO = "cercle.png";
+	private static final String PATH_CIRCLE_SEL_ICO = "cerclesel.png";
 
 	private static final String HELP_MESSAGE = "The Selection tool is used to move and modify the elements on the Terrain.\n"
 			+ "    To cycle through stacked elements, click multiple time on the same spot without moving the mouse.\n"
@@ -237,9 +235,9 @@ public class EnvMenu extends JFrame {
 			String toolTip, int btnSize) {
 		JToggleButton tglBtn;
 		try {
-			Image ico = ImageIO.read(new File(imagePathUnsel));
+			Image ico = ImageIO.read(getClass().getResourceAsStream("/"+imagePathUnsel));//ImageIO.read(new File(imagePathUnsel));
 			tglBtn = new JToggleButton(new ImageIcon(getScaledImage(ico, iconSize, iconSize)));
-			ico = ImageIO.read(new File(imagePathSel));
+			ico = ImageIO.read(getClass().getResourceAsStream("/"+imagePathSel));
 			tglBtn.setSelectedIcon(new ImageIcon(getScaledImage(ico, iconSize, iconSize)));
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -5,7 +5,6 @@ import java.awt.Cursor;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +24,6 @@ public class Point implements TerrainElement {
 	
 	private static int num = 0;// used for automatic naming
 	private static final transient int TAILLE_MIN_AFF = 10;// minimal display radius (display depends on collRadius)
-	private static final transient String PATH_RESOURCES = "resources/";//chemin vers les ressources image
 	private transient boolean grabed = false;//indique si l'utilisateur manipule le point
 	private transient Vector oldMousePos;//permet le calcul du vecteur deplacement de la souris
 	private static final transient int NAME_OFFSET_X = 10,NAME_OFFSET_Y = -10;
@@ -77,7 +75,7 @@ public class Point implements TerrainElement {
 	 */
 	private static Image readImage(PointType pt) {
 		try {
-			return ImageIO.read(new File(PATH_RESOURCES + pt.getIconFileName()));
+			return ImageIO.read(Point.class.getResourceAsStream("/" + pt.getIconFileName()));
 		} catch (IOException e) {
 			System.err.println("Unable to load Point icon for " + pt);
 			e.printStackTrace();
