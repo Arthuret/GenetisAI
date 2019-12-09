@@ -40,6 +40,10 @@ public class Dot implements Serializable{
 	public Vector getPosition() {
 		return position;
 	}
+	
+	public Vector getSpeed() {
+		return speed;
+	}
 
 	/**
 	 * Reset all values to default and teleport to position
@@ -102,8 +106,9 @@ public class Dot implements Serializable{
 		this.isBest = best;
 	}
 
-	public void setDead(boolean dead) {
+	public void setDead(boolean dead,int frameNumber) {
 		isDead = dead;
+		this.frameNumber = frameNumber;
 	}
 
 	public void setWin(boolean win,int frameNumber) {
@@ -115,7 +120,7 @@ public class Dot implements Serializable{
 	 * The frame number of the win event (given in setWin)
 	 * @return the number of the winning frame
 	 */
-	public int getWinFrame() {
+	public int getLastFrame() {
 		return frameNumber;
 	}
 

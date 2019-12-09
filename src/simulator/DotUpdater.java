@@ -28,7 +28,7 @@ public class DotUpdater implements Serializable{
 			d.update(tavar);
 
 			if (!tavar.t.isValid(d.getPosition()))
-				d.setDead(true);
+				d.setDead(true, frameNumber);
 			Point goal = tavar.tvar.getGoal();
 			if (Vector.distance(goal.getPosition(), d.getPosition()) < goal.getCollisionRadius())
 				d.setWin(true, frameNumber);
