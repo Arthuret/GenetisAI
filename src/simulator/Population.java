@@ -42,29 +42,30 @@ public class Population implements Serializable{
 		}
 	}
 	
+	private transient float[] fitnesses;
+	private transient float max,sum;
+	
+	public void computeFitness(TerrainAndVar old) {
+		fitnesses = new float[pop.length];
+		max = 0;
+		sum = 0;
+		for(int i = 0;i < pop.length;i++) {
+			fitnesses[i] = pop[i].computeFitness(old.tvar.getGoal().getPosition());
+			max = Math.max(max, fitnesses[i]);
+			sum+=fitnesses[i];
+		}
+		old.maxFitness = max;
+		System.out.println("fit:sum="+sum+";\tmax="+max);
+	}
+	
 	/**
 	 * Generate a new Population based on the set parameters
 	 * @param set The parameters for the generation evolution and selection
-	 * @param oldtvar Old terrainVariation
 	 * @param nextOrigin The origin of the next simulation
 	 * @return
 	 */
-	public Population getNextGeneration(BrainSimulationSet set,TerrainAndVar oldtvar,Vector nextOrigin) {
-		float[] fitness = new float[pop.length];
-		float sum = 0;
-		for(int i = 0;i < pop.length;i++) {
-			fitness[i] = pop[i].computeFitness(oldtvar.tvar.getGoal().getPosition());
-			sum+=fitness[i];
-		}
+	public Population getNextGeneration(BrainSimulationSet set,Vector nextOrigin) {
 		Dot[] newPop = new Dot[pop.length];
-		float max = 0;
-		for(int i = 0;i < pop.length;i++) {
-			if(fitness[i] > max) {
-				max = fitness[i];
-			}
-		}
-		oldtvar.maxFitness = max;
-		System.out.println("fit:sum="+sum+";\tmax="+max);
 		Random r = new Random();
 		switch(set.childOrigin) {
 		case OLD_GENERATION:
@@ -72,7 +73,7 @@ public class Population implements Serializable{
 				float num = r.nextFloat()*sum;
 				float tempSum = 0;
 				for(int j = 0;j < pop.length;j++) {
-					tempSum+=fitness[j];
+					tempSum+=fitnesses[j];
 					if(tempSum >= num) {
 						newPop[i] = new Dot(pop[j].getBrain().copy(),nextOrigin);
 						break;
@@ -85,14 +86,11 @@ public class Population implements Serializable{
 			return new Population(newPop);
 		case REMAINING_POPULATION:
 			//sorting the old population
-			List<DotFit> lpop = new ArrayList<>();
-			for(int i = 0;i < pop.length;i++)
-				lpop.add(new DotFit(pop[i],fitness[i]));
-			lpop.sort((a,b)-> (b.fit > a.fit)?1:(b.fit == a.fit)?0:-1);
+			List<Dot> ranked = getDotsRanked();
 			int size_keep = (int) ((set.keepedProportion/100f)*set.populationSize);
 			//selecting dots
 			for(int i = 0;i < size_keep;i++) {
-				newPop[i] = lpop.get(i).d;
+				newPop[i] = ranked.get(i);
 				newPop[i].reset(nextOrigin);
 			}
 			for(int i = size_keep;i < newPop.length;i++) {
@@ -112,6 +110,21 @@ public class Population implements Serializable{
 			this.d = d;
 			this.fit = fit;
 		}
+	}
+	
+	/**
+	 * Compute the ranking of the current gen. Will only work at the end of a generation, after a call to compute fitness
+	 * @return The list of the dots ranked by fitness from the best to least.
+	 */
+	public List<Dot> getDotsRanked(){
+		List<DotFit> l = new ArrayList<>();
+		for(int i = 0;i < pop.length;i++) {
+			l.add(new DotFit(pop[i],fitnesses[i]));
+		}
+		l.sort((a,b)->(b.fit > a.fit)?1:(b.fit == a.fit)?0:-1);
+		List<Dot> resp = new ArrayList<>();
+		l.forEach(e->resp.add(e.d));
+		return resp;
 	}
 	
 	/**

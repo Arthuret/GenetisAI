@@ -12,10 +12,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import menu.MainMenu;
@@ -67,7 +71,7 @@ public class SimulationManager implements Runnable {
 
 	private static DecimalFormat df1 = new DecimalFormat();// used to display memory used
 	private static DecimalFormat df2 = new DecimalFormat();// idem
-	
+
 	private SimulationDataSet tempSet;
 
 	public SimulationManager(SimulationDataSet set) {
@@ -75,19 +79,20 @@ public class SimulationManager implements Runnable {
 		df1.setMaximumFractionDigits(1);
 		df2.setMaximumFractionDigits(2);
 	}
-	
-	public boolean load(File f,JFrame parent) {
-		try(FileInputStream fis = new FileInputStream(f)){
+
+	public boolean load(File f, JFrame parent) {
+		try (FileInputStream fis = new FileInputStream(f)) {
 			ObjectInputStream ois = new ObjectInputStream(fis);
 			Object o = ois.readObject();
 			ois.close();
-			if(o instanceof SimuState) {
-				this.s = (SimuState)o;
+			if (o instanceof SimuState) {
+				this.s = (SimuState) o;
 				pause = true;
 				return true;
 			}
 		} catch (ClassNotFoundException | IOException e) {
-			JOptionPane.showMessageDialog(parent, "An error occured while reading the file :\n"+e.getMessage(), "Reading error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(parent, "An error occured while reading the file :\n" + e.getMessage(),
+					"Reading error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		}
 		return false;
@@ -103,7 +108,7 @@ public class SimulationManager implements Runnable {
 	public void run() {
 		// Open the window
 		pane = new SimuPane(this);
-		if(s == null) {
+		if (s == null) {
 			this.s = new SimuState();
 			this.s.set = tempSet;
 			// grab an environnement
@@ -118,8 +123,6 @@ public class SimulationManager implements Runnable {
 
 		System.out.println("Starting simulation");
 
-
-
 		// seting up the population and timings
 		long nextSecond = System.currentTimeMillis();
 		long nbUp = 0;
@@ -127,10 +130,10 @@ public class SimulationManager implements Runnable {
 		while (running) {
 			// main loop
 			long nextFrameTime = System.currentTimeMillis();
-			s.newHist = new History();//TODO
+			s.newHist = new History();// TODO
 			do {
 				// physic engine
-				if(!pause || stepCall || stepGenCall) {
+				if (!pause || stepCall || stepGenCall) {
 					simuStep();
 					nbUp++;
 					// framerate management
@@ -175,14 +178,14 @@ public class SimulationManager implements Runnable {
 			if (running) {
 				genStep();// perform history management only
 				// generate next generation
-				TerrainAndVar old = s.current;
+				s.pop.computeFitness(s.current);
 				nextTerrain();
 				if (restart) {
 					restart = false;
 					s.pop = new Population(s.set.brainSimuSet, s.current.tvar.getOrigin().getPosition());
 					s.genNumber = 0;
 				} else {
-					s.pop = s.pop.getNextGeneration(s.set.brainSimuSet, old, s.current.tvar.getOrigin().getPosition());
+					s.pop = s.pop.getNextGeneration(s.set.brainSimuSet, s.current.tvar.getOrigin().getPosition());
 					s.genNumber++;
 				}
 				s.frameNumber = 0;
@@ -415,9 +418,11 @@ public class SimulationManager implements Runnable {
 	public void stop() {
 		boolean currentPause = pause;
 		pause = true;
-		switch(JOptionPane.showConfirmDialog(frame, "All datas will be lost. Do you wish to save the simulation state before exit ?", "Exiting", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE)) {
+		switch (JOptionPane.showConfirmDialog(frame,
+				"All datas will be lost. Do you wish to save the simulation state before exit ?", "Exiting",
+				JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE)) {
 		case JOptionPane.YES_OPTION:
-			if(saveState())
+			if (saveState())
 				break;
 		case JOptionPane.CANCEL_OPTION:
 			pause = currentPause;
@@ -467,16 +472,16 @@ public class SimulationManager implements Runnable {
 
 	private File currentDir = null;
 
-	private File selectFile(boolean state, SimuFrame f) {
+	private File selectFile(boolean state) {
 		JFileChooser fc = new JFileChooser();
 		fc.setFileFilter(new FileNameExtensionFilter(
 				(state) ? "Simulation State File (.simustate)" : "Brain Data File (.braindata)",
 				(state) ? "simustate" : "braindata"));
 		fc.setDialogTitle(
-				(state) ? "Save the actual state of the simulation" : "Save the best brain of the simulation");
+				(state) ? "Save the actual state of the simulation" : "Save the best brains of the simulation");
 		if (currentDir != null)
 			fc.setCurrentDirectory(currentDir);
-		if (fc.showSaveDialog(f) == JFileChooser.APPROVE_OPTION) {
+		if (fc.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
 			currentDir = fc.getSelectedFile().getParentFile();
 			if (!(fc.getSelectedFile().getName().endsWith((state) ? ".simustate" : ".braindata")))
 				return new File(fc.getSelectedFile() + ((state) ? ".simustate" : ".braindata"));
@@ -490,11 +495,11 @@ public class SimulationManager implements Runnable {
 		boolean currentPause = pause;
 		pause = true;
 		boolean resp = false;
-		if(!stepGenCall) {
+		if (!stepGenCall) {
 			File f;
 			int r = JOptionPane.YES_OPTION;
 			do {
-				f = selectFile(true, frame);
+				f = selectFile(true);
 				if (f != null && f.exists())
 					r = JOptionPane.showConfirmDialog(frame,
 							"A file with this name already exixst.\nDo you wish to overwrite it ?", "File overwrite",
@@ -514,9 +519,49 @@ public class SimulationManager implements Runnable {
 			oos.close();
 			return true;
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(frame, "Error : "+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(frame, "Error : " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		}
 		return false;
+	}
+
+	public void saveBrains() {
+		boolean currentpause = pause;
+		pause = true;
+		if (!stepGenCall && (s.frameNumber == MAX_FRAME_PER_GEN || s.pop.isAllDead())) {// only possible if at the end
+																						// of a generation
+			JSpinner sp = new JSpinner(new SpinnerNumberModel(10, 1, s.set.brainSimuSet.populationSize, 1));
+			if (JOptionPane.showOptionDialog(frame, sp, "Enter the number of brains to save",
+					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null,
+					null) == JOptionPane.OK_OPTION) {
+				File f;
+				int r = JOptionPane.YES_OPTION;
+				do {
+					f = selectFile(false);
+					if (f != null && f.exists())
+						r = JOptionPane.showConfirmDialog(frame,
+								"A file with this name already exixst.\nDo you wish to overwrite it ?",
+								"File overwrite", JOptionPane.YES_NO_CANCEL_OPTION);
+				} while (f != null && r != JOptionPane.YES_OPTION && r != JOptionPane.CANCEL_OPTION);
+				if (f != null && r == JOptionPane.YES_OPTION)
+					saverBrain(f,(int) sp.getValue());
+			}
+		}
+		pause = currentpause;
+	}
+
+	private void saverBrain(File f,int nb) {
+		s.pop.computeFitness(s.current);
+		List<Dot> dots = s.pop.getDotsRanked();
+		List<Dot> l = new ArrayList<>();
+		for(int i = 0;i < nb;i++) l.add(dots.get(i));
+		try (FileOutputStream fos = new FileOutputStream(f)) {
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(l);
+			oos.close();
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(frame, "Error : "+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		}
 	}
 }
