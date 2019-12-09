@@ -8,7 +8,7 @@ import java.security.InvalidParameterException;
  *
  */
 public class Limiter implements TfFunction {
-	
+	private static final long serialVersionUID = 1L;
 	private TfFunction f;
 	private float min,max;
 	
