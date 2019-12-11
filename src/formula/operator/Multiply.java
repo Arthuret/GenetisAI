@@ -7,6 +7,7 @@ import formula.Context;
 import formula.Element;
 
 public class Multiply implements Element {
+	private static final long serialVersionUID = 1L;
 
 	private List<Element> elements;
 

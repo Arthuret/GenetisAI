@@ -41,6 +41,7 @@ import brain.BrainTemplate;
 import environnement.Terrain;
 import environnement.TerrainVariation;
 import environnement.TerrainVariationSet;
+import formula.Formula;
 import menu.MainMenu;
 import simulator.SimulationManager;
 import tools.menu.SpinnerFractionModel;
@@ -62,6 +63,7 @@ public class TrainingMenu extends JFrame {
 	private JSpinner spinnerProbaMutAbs;
 	private JSpinner spinnerPropChild;
 	private JComboBox<ChildOrigin> cbOrgChild;
+	private JTextField fitnessFunc;
 
 	private JPanel leftPanel, rightPanel;
 
@@ -103,6 +105,7 @@ public class TrainingMenu extends JFrame {
 		spinnerProbaMutAbs.setValue(brainSimuSet.absMutDivider);
 		spinnerPropChild.setValue(brainSimuSet.keepedProportion);
 		cbOrgChild.setSelectedItem(brainSimuSet.childOrigin);
+		fitnessFunc.setText((brainSimuSet.fitness == null) ? "" : brainSimuSet.fitness.toString());
 	}
 
 	private void setupGui() {
@@ -199,6 +202,12 @@ public class TrainingMenu extends JFrame {
 		leftPanel.add(Box.createRigidArea(SPACING));
 
 		enfantsGui();
+
+		leftPanel.add(Box.createRigidArea(SPACING));
+		leftPanel.add(new JSeparator());
+		leftPanel.add(Box.createRigidArea(SPACING));
+
+		fitnessGui();
 	}
 
 	private void brainTemplateGui() {
@@ -374,6 +383,37 @@ public class TrainingMenu extends JFrame {
 		cbOrgChild.addActionListener(e -> brainSimuSet.childOrigin = (ChildOrigin) cbOrgChild.getSelectedItem());
 	}
 
+	private void fitnessGui() {
+		JPanel fitpanel = new JPanel();
+		leftPanel.add(fitpanel);
+		fitpanel.setLayout(new BoxLayout(fitpanel, BoxLayout.X_AXIS));
+		fitnessFunc = new JTextField();
+		fitnessFunc.setEditable(false);
+		fitnessFunc.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2)
+					editFitness();
+			}
+		});
+		fitpanel.add(new JLabel("Fitness function : "));
+		fitpanel.add(Box.createRigidArea(SPACING));
+		fitpanel.add(fitnessFunc);
+	}
+
+	private void editFitness() {
+		FormulaEditor fedit;
+		if (brainSimuSet.fitness == null)
+			fedit = new FormulaEditor(this, "");
+		else
+			fedit = new FormulaEditor(this, brainSimuSet.fitness);
+		Formula fo = fedit.showDialog();
+		if (fo != null) {
+			brainSimuSet.fitness = fo;
+			initializeDatas();
+		}
+	}
+
 	private void setupRight() {
 		rightPanel = new JPanel();
 		GridBagConstraints gbc_rightPanel = new GridBagConstraints();
@@ -487,14 +527,14 @@ public class TrainingMenu extends JFrame {
 		GridBagLayout gbl_terrainBtnPanel = new GridBagLayout();
 		gbl_terrainBtnPanel.columnWidths = new int[] { 0, 0 };
 		gbl_terrainBtnPanel.rowHeights = new int[] { 0 };
-		gbl_terrainBtnPanel.columnWeights = new double[] { 1.0, 1.0};
+		gbl_terrainBtnPanel.columnWeights = new double[] { 1.0, 1.0 };
 		gbl_terrainBtnPanel.rowWeights = new double[] { 0.0 };
 		terrainBtnPanel.setLayout(gbl_terrainBtnPanel);
 
 		JButton btnNewVariation = new JButton("New variation");
 		GridBagConstraints gbc_btnNewVariation = new GridBagConstraints();
 		gbc_btnNewVariation.fill = GridBagConstraints.BOTH;
-		gbc_btnNewVariation.insets = new Insets(0,0,5,0);
+		gbc_btnNewVariation.insets = new Insets(0, 0, 5, 0);
 		gbc_btnNewVariation.gridx = 0;
 		gbc_btnNewVariation.gridy = 0;
 		terrainBtnPanel.add(btnNewVariation, gbc_btnNewVariation);
@@ -572,8 +612,8 @@ public class TrainingMenu extends JFrame {
 
 	private void generateAllVars() {
 		Object path = terrainTree.getLastSelectedPathComponent();
-		
-		if(path instanceof TerrainVariationSet) {
+
+		if (path instanceof TerrainVariationSet) {
 			TerrainVariationSet tvs = (TerrainVariationSet) path;
 			tvs.generateAllVars();
 			initializeDatas();
@@ -830,14 +870,18 @@ public class TrainingMenu extends JFrame {
 	}
 
 	private void startSimulation() {
-		if (terrains.hasVariation()) {
-			SimulationManager m = new SimulationManager(dataSet);
-			System.out.println(dataSet.toString());
-			dispose();
-			m.startSimulation();
-		} else {
+		if (!terrains.hasVariation()) {
 			JOptionPane.showMessageDialog(this, "No valid terrain", "Error in simulation launching",
 					JOptionPane.ERROR_MESSAGE);
+			return;
 		}
+		if (brainSimuSet.fitness == null) {
+			JOptionPane.showMessageDialog(this, "Empty fitness is not allowed", "Error in simulation launching",
+					JOptionPane.ERROR_MESSAGE);
+		}
+		SimulationManager m = new SimulationManager(dataSet);
+		System.out.println(dataSet.toString());
+		dispose();
+		m.startSimulation();
 	}
 }

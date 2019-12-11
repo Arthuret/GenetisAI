@@ -8,6 +8,7 @@ import java.text.ParseException;
  * @author Arthur France
  */
 public class Constant implements Element {
+	private static final long serialVersionUID = 1L;
 
 	private float constant;
 	private String repr;

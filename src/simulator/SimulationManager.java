@@ -106,6 +106,7 @@ public class SimulationManager implements Runnable {
 
 	@Override
 	public void run() {
+		System.out.println("Available cores : "+Runtime.getRuntime().availableProcessors());
 		// Open the window
 		pane = new SimuPane(this);
 		if (s == null) {
@@ -178,7 +179,7 @@ public class SimulationManager implements Runnable {
 			if (running) {
 				genStep();// perform history management only
 				// generate next generation
-				s.pop.computeFitness(s.current);
+				s.pop.computeFitness(s.set.brainSimuSet.fitness, s.current);
 				nextTerrain();
 				if (restart) {
 					restart = false;
@@ -550,8 +551,13 @@ public class SimulationManager implements Runnable {
 		pause = currentpause;
 	}
 
+	/**
+	 * Save the best nb brains in f file.
+	 * @param f the file to save the brain in
+	 * @param nb the number of brains to save
+	 */
 	private void saverBrain(File f,int nb) {
-		s.pop.computeFitness(s.current);
+		s.pop.computeFitness(s.set.brainSimuSet.fitness, s.current);
 		List<Dot> dots = s.pop.getDotsRanked();
 		List<Dot> l = new ArrayList<>();
 		for(int i = 0;i < nb;i++) l.add(dots.get(i));

@@ -1,5 +1,6 @@
 package formula;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +11,8 @@ import formula.operator.*;
  * A simple mathemaic parsing class used to contain the fitness expression.
  * @author Arthur France
  */
-public class Formula {
+public class Formula implements Serializable{
+	private static final long serialVersionUID = 1L;
 	private Element rootElement;
 	
 	/**
@@ -35,6 +37,10 @@ public class Formula {
 		int cpt = begin;
 		List<Element> elements = new ArrayList<>();
 		List<Character> signs = new ArrayList<>();
+		if(s.length() == 0)
+			throw new ParseException("Empty input", 0);
+		if(begin == end)
+			throw new ParseException("Empty block", begin);
 		do {
 			//extracting element
 			int d = searchEndBlock(s,cpt,end);
@@ -191,8 +197,9 @@ public class Formula {
 		return rootElement.toString();
 	}
 	
-	/*public static void main(String[] args) {//debug purposes
-		String f = "10.5/(0-2)+(((5+$DISTANCE)))*$NB_STEPS+(1+2-3+4)";
+	public static void main(String[] args) {//debug purposes
+		//String f = "10.5/(0-2)+(((5+$DISTANCE)))*$NB_STEPS+(1+2-3+4)";
+		String f = "(1*2*3*4/5*6/7*8*9)";
 		try {
 			Formula form = Formula.parse(f);
 			System.out.println(form+" OK");
@@ -203,5 +210,5 @@ public class Formula {
 				System.err.print(" ");
 			System.err.println("^");
 		}
-	}*/
+	}
 }

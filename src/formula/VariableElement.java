@@ -9,7 +9,7 @@ import java.text.ParseException;
  *
  */
 public class VariableElement implements Element {
-
+	private static final long serialVersionUID = 1L;
 	private Variables v;
 
 	public VariableElement(Variables v) {

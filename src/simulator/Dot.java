@@ -5,21 +5,24 @@ import java.awt.Graphics;
 import java.io.Serializable;
 
 import brain.BrainData;
+import formula.Context;
+import formula.Formula;
 import tools.math.Vector;
 
 /**
  * A simulation entity, containing a brain
+ * 
  * @author Arthur France
  *
  */
-public class Dot implements Serializable{
+public class Dot implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private BrainData brain;
 	private Vector position, speed;
 	private boolean isBest = false;// allow different display for the best dot
 	private boolean isDead = false;
 	private boolean isWin = false;
-	
+
 	private int frameNumber;
 
 	private transient static final Color DEFAULT_COLOR = Color.DARK_GRAY;
@@ -40,13 +43,14 @@ public class Dot implements Serializable{
 	public Vector getPosition() {
 		return position;
 	}
-	
+
 	public Vector getSpeed() {
 		return speed;
 	}
 
 	/**
 	 * Reset all values to default and teleport to position
+	 * 
 	 * @param position
 	 */
 	public void reset(Vector position) {
@@ -58,66 +62,67 @@ public class Dot implements Serializable{
 
 	/**
 	 * Show the dot on screen
-	 * @param g The Graphics object
+	 * 
+	 * @param g      The Graphics object
 	 * @param factor The display scale
 	 * @param offset The display offset
 	 */
-	public void show(Graphics g,float factor,Vector offset) {
-		g.setColor((isBest)?BEST_COLOR:(isDead)?DEAD_COLOR:(isWin)?WIN_COLOR:DEFAULT_COLOR);
-		int initialRadius = (isBest)?20:8;
-		int radius = (int) (initialRadius*factor);
-		Vector spos = position.times(factor).sub(new Vector(radius/2f)).add(offset);
+	public void show(Graphics g, float factor, Vector offset) {
+		g.setColor((isBest) ? BEST_COLOR : (isDead) ? DEAD_COLOR : (isWin) ? WIN_COLOR : DEFAULT_COLOR);
+		int initialRadius = (isBest) ? 20 : 8;
+		int radius = (int) (initialRadius * factor);
+		Vector spos = position.times(factor).sub(new Vector(radius / 2f)).add(offset);
 		g.fillOval((int) spos.x(), (int) spos.y(), radius, radius);
 	}
 
 	/**
 	 * Call the brain and perform a physic step
+	 * 
 	 * @param tavar the current terrain environnement
 	 */
 	public void update(TerrainAndVar tavar) {
-		float[] inputs = tavar.t.computeInputs(tavar.tvar, position, speed, brain.cSpeed(), brain.cDistance(), brain.cDirection(), brain.cWalls(),
-				brain.sensorLimit());
+		float[] inputs = tavar.t.computeInputs(tavar.tvar, position, speed, brain.cSpeed(), brain.cDistance(),
+				brain.cDirection(), brain.cWalls(), brain.sensorLimit());
 		float[] outputs = brain.compute(inputs);
-		Vector acc = new Vector(outputs[0],outputs[1]);
+		Vector acc = new Vector(outputs[0], outputs[1]);
 		speed = speed.add(acc).limit(brain.getSpeedLimit());
 		position = position.add(speed);
-		
+
 	}
-	
-	//scores used to compute fitness scores //TODO Put that in a file or interface
-	private static final float WIN_POINTS = 50_000;
-	private static final float DEATH_POINTS = 10;
-	private static final float DISTANCE_POINTS = 10_000;
-	
+
+	private transient static final float MINIMUM_POINTS = 0.001f;
+
 	/**
 	 * Compute the fitness score of the Dot
-	 * @param goal the goal to reach
+	 * 
+	 * @param f    the formula containing the equation to use to compute the fitness
+	 *             score
+	 * @param tvar the TerrainAndVar of the just passed simulation
 	 * @return The fitness score of the Dot
 	 */
-	public float computeFitness(Vector goal) {
-		float fit = 0;
-		if(isWin) fit+=(WIN_POINTS/frameNumber);
-		if(isDead) fit-=DEATH_POINTS;
-		fit+=DISTANCE_POINTS/Vector.distance(goal, position);
-		return Math.max(fit,0.1f);
+	public float computeFitness(Formula f, TerrainAndVar tvar) {
+		Context c = new Context(this, tvar);
+		float fit = f.getValue(c);
+		return Math.max(fit, MINIMUM_POINTS);
 	}
 
 	public void setBest(boolean best) {
 		this.isBest = best;
 	}
 
-	public void setDead(boolean dead,int frameNumber) {
+	public void setDead(boolean dead, int frameNumber) {
 		isDead = dead;
 		this.frameNumber = frameNumber;
 	}
 
-	public void setWin(boolean win,int frameNumber) {
+	public void setWin(boolean win, int frameNumber) {
 		isWin = win;
 		this.frameNumber = frameNumber;
 	}
-	
+
 	/**
 	 * The frame number of the win event (given in setWin)
+	 * 
 	 * @return the number of the winning frame
 	 */
 	public int getLastFrame() {

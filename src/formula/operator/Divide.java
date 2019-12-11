@@ -4,6 +4,7 @@ import formula.Context;
 import formula.Element;
 
 public class Divide implements Element {
+	private static final long serialVersionUID = 1L;
 
 	private Element a, b;
 
