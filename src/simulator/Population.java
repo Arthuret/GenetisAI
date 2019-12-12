@@ -18,6 +18,10 @@ import tools.math.Vector;
 public class Population implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private Dot[] pop;
+	
+	//debug and performance
+	public transient long minThreadTime=Long.MAX_VALUE,maxThreadTime=-1;
+	public transient long selectionTime=-1,fitComputeTime=-1;
 
 	/**
 	 * Generate a random population based on parameters in set
@@ -32,8 +36,10 @@ public class Population implements Serializable {
 		}
 	}
 
-	private Population(Dot[] pop) {
+	private Population(Dot[] pop,long fitTime,long selTime) {
 		this.pop = pop;
+		this.selectionTime = selTime;
+		this.fitComputeTime = fitTime;
 	}
 
 	/**
@@ -58,6 +64,7 @@ public class Population implements Serializable {
 	 * @param old the TerrainAndVar of the just passed simulation
 	 */
 	public void computeFitness(Formula f, TerrainAndVar old) {
+		long t = System.currentTimeMillis();
 		fitnesses = new float[pop.length];
 		max = 0;
 		sum = 0;
@@ -67,7 +74,8 @@ public class Population implements Serializable {
 			sum += fitnesses[i];
 		}
 		old.maxFitness = max;
-		System.out.println("fit:sum=" + sum + ";\tmax=" + max);
+		//System.out.println("fit:sum=" + sum + ";\tmax=" + max);
+		fitComputeTime = System.currentTimeMillis()-t;
 	}
 
 	/**
@@ -78,6 +86,7 @@ public class Population implements Serializable {
 	 * @return
 	 */
 	public Population getNextGeneration(BrainSimulationSet set, Vector nextOrigin) {
+		long t = System.currentTimeMillis();
 		Dot[] newPop = new Dot[pop.length];
 		Random r = new Random();
 		switch (set.childOrigin) {
@@ -95,8 +104,8 @@ public class Population implements Serializable {
 			}
 			for (Dot d : newPop) {
 				d.getBrain().mutate(set);
-			}
-			return new Population(newPop);
+			};
+			break;
 		case REMAINING_POPULATION:
 			// sorting the old population
 			List<Dot> ranked = getDotsRanked();
@@ -110,9 +119,8 @@ public class Population implements Serializable {
 				newPop[i] = new Dot(newPop[r.nextInt(size_keep)].getBrain().copy(), nextOrigin);
 				newPop[i].getBrain().mutate(set);
 			}
-			return new Population(newPop);
 		}
-		return null;
+		return new Population(newPop,fitComputeTime,System.currentTimeMillis()-t);
 	}
 
 	private class DotFit {
@@ -166,25 +174,32 @@ public class Population implements Serializable {
 		if (multithread) {
 			int nbProc = Math.min(Runtime.getRuntime().availableProcessors(), pop.length);
 			Thread[] t = new Thread[nbProc];
+			Worker[] w = new Worker[nbProc];
 			int nbPT = pop.length / nbProc;
 			int r = pop.length % nbProc;
 			int tmp = 0;
 			for (int i = 0; i < nbProc; i++) {
 				int begin = tmp;
 				tmp += (i < r) ? nbPT + 1 : nbPT;
-				t[i] = new Thread(new Worker(du, pop, begin, tmp, frameNumber));
+				w[i] = new Worker(du, pop, begin, tmp, frameNumber);
+				t[i] = new Thread(w[i]);
 				t[i].start();
 			}
-			for (Thread w : t) {
+			for (int i = 0;i < nbProc;i++) {
 				try {
-					w.join();
+					t[i].join();
+					minThreadTime = Math.min(minThreadTime, w[i].time);
+					maxThreadTime = Math.max(maxThreadTime, w[i].time);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
 		} else {
+			long t = System.currentTimeMillis();
 			for (Dot d : pop)
 				du.updateDot(d, frameNumber);
+			minThreadTime = System.currentTimeMillis()-t;
+			maxThreadTime = minThreadTime;
 		}
 	}
 
@@ -193,6 +208,7 @@ public class Population implements Serializable {
 		private int frameNumber;
 		private DotUpdater du;
 		private int begin, end;
+		private long time;
 
 		private Worker(DotUpdater du, Dot[] pop, int begin, int end, int fn) {
 			this.pop = pop;
@@ -204,8 +220,10 @@ public class Population implements Serializable {
 
 		@Override
 		public void run() {
+			long t = System.currentTimeMillis();
 			for (int i = begin; i < end; i++)
 				du.updateDot(pop[i], frameNumber);
+			time = System.currentTimeMillis()-t;
 		}
 	}
 

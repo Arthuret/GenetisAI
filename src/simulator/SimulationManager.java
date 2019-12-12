@@ -52,6 +52,7 @@ public class SimulationManager implements Runnable {
 
 	private boolean restart = false;// request for reinitializing the simulator
 	private boolean statShow = true;// show the text infos
+	private boolean debug = false;//show the debug informations
 	private boolean history = true;// show the histories
 
 	private boolean fill = false, showCount = false;// fill the obstacles, show the number of collisions on the
@@ -73,6 +74,11 @@ public class SimulationManager implements Runnable {
 	private static DecimalFormat df2 = new DecimalFormat();// idem
 
 	private SimulationDataSet tempSet;
+	
+	//debug and performance
+	private long stepTime=0;
+	private long drawWaitTime=0;
+	
 
 	public SimulationManager(SimulationDataSet set) {
 		this.tempSet = set;
@@ -135,7 +141,9 @@ public class SimulationManager implements Runnable {
 			do {
 				// physic engine
 				if (!pause || stepCall || stepGenCall) {
+					long t = System.currentTimeMillis();
 					simuStep();
+					stepTime = System.currentTimeMillis()-t;
 					nbUp++;
 					// framerate management
 					if (frameInterval != 0) {
@@ -154,9 +162,11 @@ public class SimulationManager implements Runnable {
 					s.frameNumber++;
 					// synchronizing with render thread (awt)
 					if (framerate != FRAMERATE_UNLIMITED) {// bypass
+						t = System.currentTimeMillis();
 						while (!endOfDraw)
 							safeSleep(SLEEP_WAIT_DRAW_MILLIS);
 						endOfDraw = false;
+						drawWaitTime = System.currentTimeMillis()-t;
 					}
 				}
 				// pause management
@@ -235,7 +245,9 @@ public class SimulationManager implements Runnable {
 		}
 		hideOutOfBound(g, size, s.current.t.getWalls(), factor, offset);
 		if (statShow)
-			showDebug(g, nbFrames, timeFromLastFrame);
+			showStat(g, nbFrames, timeFromLastFrame);
+		if(debug)
+			showDebug(g);
 		endOfDraw = true;
 	}
 
@@ -276,7 +288,7 @@ public class SimulationManager implements Runnable {
 	 * @param timeFromLastFrame The time passed in millisecond from the previous
 	 *                          frame
 	 */
-	private void showDebug(Graphics g, long nbFrames, long timeFromLastFrame) {
+	private void showStat(Graphics g, long nbFrames, long timeFromLastFrame) {
 		int y = 10, yp = 12;
 		g.setColor(Color.RED);
 		g.drawString("FPS:" + nbFrames, 10, y);
@@ -306,6 +318,22 @@ public class SimulationManager implements Runnable {
 		long memUsed = memAll - r.freeMemory();
 		g.drawString("Memory-All:" + df2.format(memAll / 1_000_000f) + "MB; Used:"
 				+ df1.format((memUsed / (float) memAll) * 100) + "%", 10, y);
+	}
+	
+	private void showDebug(Graphics g) {
+		int y = pane.getHeight()-10,yp = -12;
+		g.setColor(Color.GREEN);
+		g.drawString("Draw wait:"+drawWaitTime, 10, y);
+		y+=yp;
+		g.drawString("Step time:"+stepTime, 10, y);
+		y+=yp;
+		g.drawString("MinThread time:"+s.pop.minThreadTime, 10, y);
+		y+=yp;
+		g.drawString("MaxThread time:"+s.pop.maxThreadTime, 10, y);
+		y+=yp;
+		g.drawString("Selection time:"+s.pop.selectionTime, 10, y);
+		y+=yp;
+		g.drawString("FitCompute time:"+s.pop.fitComputeTime, 10, y);
 	}
 
 	private static final Color BACKGROUND = Color.DARK_GRAY;
@@ -458,6 +486,13 @@ public class SimulationManager implements Runnable {
 	 */
 	public void toggleStatShow() {
 		statShow = !statShow;
+	}
+	
+	/**
+	 * Toggle whether to show or not the debug and performance informations on the down left corner
+	 */
+	public void toggleDebug() {
+		debug = !debug;
 	}
 
 	/**

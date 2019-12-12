@@ -97,6 +97,11 @@ public class SimuFrame extends JFrame {
 		db.add(tgStat);
 		tgStat.addActionListener(e->manager.toggleStatShow());
 		
+		JMenuItem tgDebug = new JMenuItem("Toggle Debug");
+		tgDebug.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0));
+		db.add(tgDebug);
+		tgDebug.addActionListener(e->manager.toggleDebug());
+		
 		JMenuItem tgHist = new JMenuItem("Toggle histo");
 		tgHist.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, 0));
 		db.add(tgHist);
