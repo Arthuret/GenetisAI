@@ -52,7 +52,7 @@ public class SimulationManager implements Runnable {
 
 	private boolean restart = false;// request for reinitializing the simulator
 	private boolean statShow = true;// show the text infos
-	private boolean debug = false;//show the debug informations
+	private boolean debug = false;// show the debug informations
 	private boolean history = true;// show the histories
 
 	private boolean fill = false, showCount = false;// fill the obstacles, show the number of collisions on the
@@ -74,11 +74,10 @@ public class SimulationManager implements Runnable {
 	private static DecimalFormat df2 = new DecimalFormat();// idem
 
 	private SimulationDataSet tempSet;
-	
-	//debug and performance
-	private long stepTime=0;
-	private long drawWaitTime=0;
-	
+
+	// debug and performance
+	private long stepTime = 0;
+	private long drawWaitTime = 0;
 
 	public SimulationManager(SimulationDataSet set) {
 		this.tempSet = set;
@@ -112,15 +111,17 @@ public class SimulationManager implements Runnable {
 
 	@Override
 	public void run() {
-		System.out.println("Available cores : "+Runtime.getRuntime().availableProcessors());
+		System.out.println("Available cores : " + Runtime.getRuntime().availableProcessors());
 		// Open the window
 		pane = new SimuPane(this);
+		// if running a simulation from a file, s will not be null
 		if (s == null) {
+			// this is a new simulation
 			this.s = new SimuState();
 			this.s.set = tempSet;
 			// grab an environnement
 			nextTerrain();
-			s.pop = new Population(s.set.brainSimuSet, s.current.tvar.getOrigin().getPosition());
+			s.pop = new Population(s, s.current.tvar.getOrigin().getPosition());
 		}
 		pane.setPreferredSize(s.set.terrainSets.getMaxSize());
 		frame = new SimuFrame(pane, this);
@@ -138,12 +139,13 @@ public class SimulationManager implements Runnable {
 			// main loop
 			long nextFrameTime = System.currentTimeMillis();
 			s.newHist = new History();// TODO
+			s.pop.initMultiThread();// allow for multiThread activation on the fly
 			do {
 				// physic engine
 				if (!pause || stepCall || stepGenCall) {
 					long t = System.currentTimeMillis();
 					simuStep();
-					stepTime = System.currentTimeMillis()-t;
+					stepTime = System.currentTimeMillis() - t;
 					nbUp++;
 					// framerate management
 					if (frameInterval != 0) {
@@ -166,7 +168,7 @@ public class SimulationManager implements Runnable {
 						while (!endOfDraw)
 							safeSleep(SLEEP_WAIT_DRAW_MILLIS);
 						endOfDraw = false;
-						drawWaitTime = System.currentTimeMillis()-t;
+						drawWaitTime = System.currentTimeMillis() - t;
 					}
 				}
 				// pause management
@@ -177,6 +179,7 @@ public class SimulationManager implements Runnable {
 				if (s.frameNumber % CHECK_DEAD_MOD == 0)
 					endGen = s.pop.isAllDead();
 			} while (s.frameNumber < MAX_FRAME_PER_GEN && !endGen && running);
+			s.pop.destroyMultiThread();
 			endGen = false;
 			if (stepGenCall) {
 				stepGenCall = false;
@@ -189,14 +192,14 @@ public class SimulationManager implements Runnable {
 			if (running) {
 				genStep();// perform history management only
 				// generate next generation
-				s.pop.computeFitness(s.set.brainSimuSet.fitness, s.current);
+				s.pop.computeFitness(s.current);
 				nextTerrain();
 				if (restart) {
 					restart = false;
-					s.pop = new Population(s.set.brainSimuSet, s.current.tvar.getOrigin().getPosition());
+					s.pop = new Population(s, s.current.tvar.getOrigin().getPosition());
 					s.genNumber = 0;
 				} else {
-					s.pop = s.pop.getNextGeneration(s.set.brainSimuSet, s.current.tvar.getOrigin().getPosition());
+					s.pop = s.pop.getNextGeneration(s.current.tvar.getOrigin().getPosition());
 					s.genNumber++;
 				}
 				s.frameNumber = 0;
@@ -246,7 +249,7 @@ public class SimulationManager implements Runnable {
 		hideOutOfBound(g, size, s.current.t.getWalls(), factor, offset);
 		if (statShow)
 			showStat(g, nbFrames, timeFromLastFrame);
-		if(debug)
+		if (debug)
 			showDebug(g);
 		endOfDraw = true;
 	}
@@ -319,21 +322,21 @@ public class SimulationManager implements Runnable {
 		g.drawString("Memory-All:" + df2.format(memAll / 1_000_000f) + "MB; Used:"
 				+ df1.format((memUsed / (float) memAll) * 100) + "%", 10, y);
 	}
-	
+
 	private void showDebug(Graphics g) {
-		int y = pane.getHeight()-10,yp = -12;
+		int y = pane.getHeight() - 10, yp = -12;
 		g.setColor(Color.GREEN);
-		g.drawString("Draw wait:"+drawWaitTime, 10, y);
-		y+=yp;
-		g.drawString("Step time:"+stepTime, 10, y);
-		y+=yp;
-		g.drawString("MinThread time:"+s.pop.minThreadTime, 10, y);
-		y+=yp;
-		g.drawString("MaxThread time:"+s.pop.maxThreadTime, 10, y);
-		y+=yp;
-		g.drawString("Selection time:"+s.pop.selectionTime, 10, y);
-		y+=yp;
-		g.drawString("FitCompute time:"+s.pop.fitComputeTime, 10, y);
+		g.drawString("Draw wait:" + drawWaitTime, 10, y);
+		y += yp;
+		g.drawString("Step time:" + stepTime, 10, y);
+		y += yp;
+		g.drawString("MinThread time:" + s.pop.minThreadTime, 10, y);
+		y += yp;
+		g.drawString("MaxThread time:" + s.pop.maxThreadTime, 10, y);
+		y += yp;
+		g.drawString("Selection time:" + s.pop.selectionTime, 10, y);
+		y += yp;
+		g.drawString("FitCompute time:" + s.pop.fitComputeTime, 10, y);
 	}
 
 	private static final Color BACKGROUND = Color.DARK_GRAY;
@@ -367,7 +370,10 @@ public class SimulationManager implements Runnable {
 	 * compute one simulation step (one frame)
 	 */
 	private void simuStep() {
-		s.pop.step(s.dup, s.frameNumber, multithread);
+		if (multithread)
+			s.pop.stepMultiThread();
+		else
+			s.pop.stepMonoThread();
 		s.pop.updateHisto(s.newHist);
 	}
 
@@ -487,9 +493,10 @@ public class SimulationManager implements Runnable {
 	public void toggleStatShow() {
 		statShow = !statShow;
 	}
-	
+
 	/**
-	 * Toggle whether to show or not the debug and performance informations on the down left corner
+	 * Toggle whether to show or not the debug and performance informations on the
+	 * down left corner
 	 */
 	public void toggleDebug() {
 		debug = !debug;
@@ -580,7 +587,7 @@ public class SimulationManager implements Runnable {
 								"File overwrite", JOptionPane.YES_NO_CANCEL_OPTION);
 				} while (f != null && r != JOptionPane.YES_OPTION && r != JOptionPane.CANCEL_OPTION);
 				if (f != null && r == JOptionPane.YES_OPTION)
-					saverBrain(f,(int) sp.getValue());
+					saverBrain(f, (int) sp.getValue());
 			}
 		}
 		pause = currentpause;
@@ -588,20 +595,22 @@ public class SimulationManager implements Runnable {
 
 	/**
 	 * Save the best nb brains in f file.
-	 * @param f the file to save the brain in
+	 * 
+	 * @param f  the file to save the brain in
 	 * @param nb the number of brains to save
 	 */
-	private void saverBrain(File f,int nb) {
-		s.pop.computeFitness(s.set.brainSimuSet.fitness, s.current);
+	private void saverBrain(File f, int nb) {
+		s.pop.computeFitness(s.current);
 		List<Dot> dots = s.pop.getDotsRanked();
 		List<Dot> l = new ArrayList<>();
-		for(int i = 0;i < nb;i++) l.add(dots.get(i));
+		for (int i = 0; i < nb; i++)
+			l.add(dots.get(i));
 		try (FileOutputStream fos = new FileOutputStream(f)) {
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
 			oos.writeObject(l);
 			oos.close();
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(frame, "Error : "+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(frame, "Error : " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		}
 	}

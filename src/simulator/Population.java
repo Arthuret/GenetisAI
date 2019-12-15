@@ -5,9 +5,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
-import formula.Formula;
-import menu.training_editor.BrainSimulationSet;
 import tools.math.Vector;
 
 /**
@@ -18,10 +18,11 @@ import tools.math.Vector;
 public class Population implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private Dot[] pop;
-	
-	//debug and performance
-	public transient long minThreadTime=Long.MAX_VALUE,maxThreadTime=-1;
-	public transient long selectionTime=-1,fitComputeTime=-1;
+	private SimuState s;
+
+	// debug and performance
+	public transient long minThreadTime = Long.MAX_VALUE, maxThreadTime = -1;
+	public transient long selectionTime = -1, fitComputeTime = -1;
 
 	/**
 	 * Generate a random population based on parameters in set
@@ -29,17 +30,29 @@ public class Population implements Serializable {
 	 * @param set The set containing all the parameters ans template for the
 	 *            population
 	 */
-	public Population(BrainSimulationSet set, Vector startPos) {
-		pop = new Dot[set.populationSize];
-		for (int i = 0; i < set.populationSize; i++) {
-			pop[i] = new Dot(set.brainTemplate.generateRandomAgent(), startPos);
+	public Population(SimuState s, Vector startPos) {
+		this.s = s;
+		pop = new Dot[s.set.brainSimuSet.populationSize];
+		for (var i = 0; i < s.set.brainSimuSet.populationSize; i++) {
+			pop[i] = new Dot(s.set.brainSimuSet.brainTemplate.generateRandomAgent(), startPos);
 		}
 	}
 
-	private Population(Dot[] pop,long fitTime,long selTime) {
+	private Population(Dot[] pop, long fitTime, long selTime, SimuState s) {
+		this.s = s;
 		this.pop = pop;
 		this.selectionTime = selTime;
 		this.fitComputeTime = fitTime;
+	}
+
+	/**
+	 * To be called after deserialization (for at least one version) Because the
+	 * SimuState store will be null when loading a file from an older version
+	 * 
+	 * @param s The SimuState
+	 */
+	public void setSimuState(SimuState s) {
+		this.s = s;
 	}
 
 	/**
@@ -60,36 +73,34 @@ public class Population implements Serializable {
 	 * Will compute the fitness of all dots in the population and store it
 	 * internally
 	 * 
-	 * @param f   the Formula to use in the fitness score calculation
 	 * @param old the TerrainAndVar of the just passed simulation
 	 */
-	public void computeFitness(Formula f, TerrainAndVar old) {
+	public void computeFitness(TerrainAndVar old) {
 		long t = System.currentTimeMillis();
 		fitnesses = new float[pop.length];
 		max = 0;
 		sum = 0;
 		for (int i = 0; i < pop.length; i++) {
-			fitnesses[i] = pop[i].computeFitness(f, old);
+			fitnesses[i] = pop[i].computeFitness(s.set.brainSimuSet.fitness, old);
 			max = Math.max(max, fitnesses[i]);
 			sum += fitnesses[i];
 		}
 		old.maxFitness = max;
-		//System.out.println("fit:sum=" + sum + ";\tmax=" + max);
-		fitComputeTime = System.currentTimeMillis()-t;
+		// System.out.println("fit:sum=" + sum + ";\tmax=" + max);
+		fitComputeTime = System.currentTimeMillis() - t;
 	}
 
 	/**
-	 * Generate a new Population based on the set parameters
+	 * Generate a new Population. Account for the parameters
 	 * 
-	 * @param set        The parameters for the generation evolution and selection
 	 * @param nextOrigin The origin of the next simulation
-	 * @return
+	 * @return The new generated population
 	 */
-	public Population getNextGeneration(BrainSimulationSet set, Vector nextOrigin) {
+	public Population getNextGeneration(Vector nextOrigin) {
 		long t = System.currentTimeMillis();
 		Dot[] newPop = new Dot[pop.length];
 		Random r = new Random();
-		switch (set.childOrigin) {
+		switch (s.set.brainSimuSet.childOrigin) {
 		case OLD_GENERATION:
 			for (int i = 0; i < pop.length; i++) {
 				float num = r.nextFloat() * sum;
@@ -103,13 +114,14 @@ public class Population implements Serializable {
 				}
 			}
 			for (Dot d : newPop) {
-				d.getBrain().mutate(set);
-			};
+				d.getBrain().mutate(s.set.brainSimuSet);
+			}
+			;
 			break;
 		case REMAINING_POPULATION:
 			// sorting the old population
 			List<Dot> ranked = getDotsRanked();
-			int size_keep = (int) ((set.keepedProportion / 100f) * set.populationSize);
+			int size_keep = (int) ((s.set.brainSimuSet.keepedProportion / 100f) * s.set.brainSimuSet.populationSize);
 			// selecting dots
 			for (int i = 0; i < size_keep; i++) {
 				newPop[i] = ranked.get(i);
@@ -117,10 +129,10 @@ public class Population implements Serializable {
 			}
 			for (int i = size_keep; i < newPop.length; i++) {
 				newPop[i] = new Dot(newPop[r.nextInt(size_keep)].getBrain().copy(), nextOrigin);
-				newPop[i].getBrain().mutate(set);
+				newPop[i].getBrain().mutate(s.set.brainSimuSet);
 			}
 		}
-		return new Population(newPop,fitComputeTime,System.currentTimeMillis()-t);
+		return new Population(newPop, fitComputeTime, System.currentTimeMillis() - t, s);
 	}
 
 	private class DotFit {
@@ -163,67 +175,122 @@ public class Population implements Serializable {
 		}
 	}
 
+	private transient Thread[] threads;
+	private transient Worker[] workers;
+	private transient CyclicBarrier cbBegin, cbEnd;
+
 	/**
-	 * Perform a physic step on oll dots
-	 * 
-	 * @param du          The updater to use
-	 * @param frameNumber The actual frame number
+	 * Initialise the threading system To be called before using the multithread
+	 * option of step()
 	 */
-	public void step(DotUpdater du, int frameNumber, boolean multithread) {
-		// this is the part to multithread
-		if (multithread) {
-			int nbProc = Math.min(Runtime.getRuntime().availableProcessors(), pop.length);
-			Thread[] t = new Thread[nbProc];
-			Worker[] w = new Worker[nbProc];
-			int nbPT = pop.length / nbProc;
-			int r = pop.length % nbProc;
-			int tmp = 0;
-			for (int i = 0; i < nbProc; i++) {
-				int begin = tmp;
-				tmp += (i < r) ? nbPT + 1 : nbPT;
-				w[i] = new Worker(du, pop, begin, tmp, frameNumber);
-				t[i] = new Thread(w[i]);
-				t[i].start();
+	public void initMultiThread() {
+		// get number of maximum concurrently running threads
+		// if more threads are created, they will execute on the same logical processor
+		// and thus reduce the performance of all the threads on the same logical
+		// processor.
+		var nbProc = Math.min(Runtime.getRuntime().availableProcessors(), pop.length);
+		// The barriers await for all the computing thread + the managing thread (+1)
+		cbBegin = new CyclicBarrier(nbProc + 1);
+		cbEnd = new CyclicBarrier(nbProc + 1);
+		threads = new Thread[nbProc];
+		workers = new Worker[nbProc];
+		// near equal distribution of the processing need to the threads
+		var numberPerThread = pop.length / nbProc;
+		var remain = pop.length % nbProc;
+		var tmp = 0;
+		for (var i = 0; i < nbProc; i++) {
+			var begin = tmp;
+			tmp += (i < remain) ? numberPerThread + 1 : numberPerThread;
+			workers[i] = new Worker(begin, tmp);
+			threads[i] = new Thread(workers[i]);
+			// all threads wait at the first barrier
+			threads[i].start();
+		}
+	}
+
+	public void destroyMultiThread() {
+		// a infinite non limited while is possible because the wait time will be less
+		// than a millisecond
+		// we wait for all the threads to reach the gate
+		// if we don't wait, one could exit befor the gate, and deadlock the app
+		while (cbBegin.getNumberWaiting() != cbBegin.getParties() - 1)
+			;
+		// tell all the threads to exit after the gate
+		for (var c : workers)
+			c.running = false;
+		try {
+			// and unlocking them
+			cbBegin.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (BrokenBarrierException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Call step() on all dots.
+	 */
+	public void stepMonoThread() {
+		var t = System.currentTimeMillis();
+		for (var d : pop)
+			s.dup.updateDot(d, s.frameNumber);
+		minThreadTime = System.currentTimeMillis() - t;
+		maxThreadTime = minThreadTime;
+	}
+
+	/**
+	 * Call step() on all dots, using a set of threads to parallelize the processing
+	 * Cannot be called before initMultiThread()
+	 * Be sure to call destroyMultiThread() after using the multiThreading
+	 */
+	public void stepMultiThread() {
+		try {
+			cbEnd.reset();
+			cbBegin.await();// starting signal for all computing threads
+			cbBegin.reset();
+			cbEnd.await();// wait for the end of processing
+			minThreadTime = workers[0].time;
+			maxThreadTime = workers[0].time;
+			for(var i = 1;i < workers.length;i++) {
+				minThreadTime = Math.min(workers[i].time, minThreadTime);
+				maxThreadTime = Math.max(workers[i].time, maxThreadTime);
 			}
-			for (int i = 0;i < nbProc;i++) {
-				try {
-					t[i].join();
-					minThreadTime = Math.min(minThreadTime, w[i].time);
-					maxThreadTime = Math.max(maxThreadTime, w[i].time);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		} else {
-			long t = System.currentTimeMillis();
-			for (Dot d : pop)
-				du.updateDot(d, frameNumber);
-			minThreadTime = System.currentTimeMillis()-t;
-			maxThreadTime = minThreadTime;
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (BrokenBarrierException e) {
+			e.printStackTrace();
 		}
 	}
 
 	private class Worker implements Runnable {
-		private Dot[] pop;
-		private int frameNumber;
-		private DotUpdater du;
 		private int begin, end;
-		private long time;
+		private boolean running = true;
+		private long time = -1;
 
-		private Worker(DotUpdater du, Dot[] pop, int begin, int end, int fn) {
-			this.pop = pop;
-			this.frameNumber = fn;
-			this.du = du;
+		private Worker(int begin, int end) {
 			this.begin = begin;
 			this.end = end;
 		}
 
 		@Override
 		public void run() {
-			long t = System.currentTimeMillis();
-			for (int i = begin; i < end; i++)
-				du.updateDot(pop[i], frameNumber);
-			time = System.currentTimeMillis()-t;
+			try {
+				while (running) {
+					cbBegin.await();
+					if (running) {
+						var t = System.currentTimeMillis();
+						for (var i = begin; i < end; i++)
+							s.dup.updateDot(pop[i], s.frameNumber);
+						time = System.currentTimeMillis()-t;
+						cbEnd.await();
+					}
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (BrokenBarrierException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
