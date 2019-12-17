@@ -44,7 +44,6 @@ import environnement.TerrainVariationSet;
 import formula.Formula;
 import menu.MainMenu;
 import simulator.SimulationManager;
-import tools.menu.SpinnerFractionModel;
 import tools.menu.SpinnerPercentModel;
 
 import javax.swing.JTree;
@@ -99,10 +98,10 @@ public class TrainingMenu extends JFrame {
 			btnNewBrain.setText("New");
 		}
 		spinnerPopSize.setValue(brainSimuSet.populationSize);
-		spinnerProbaMutRel.setValue(brainSimuSet.relMutDivider);
+		spinnerProbaMutRel.setValue(brainSimuSet.nbRelMut);
 		cbChangLaw.setSelectedItem(brainSimuSet.changeLaw);
 		spinnerSigma.setValue(brainSimuSet.sigma);
-		spinnerProbaMutAbs.setValue(brainSimuSet.absMutDivider);
+		spinnerProbaMutAbs.setValue(brainSimuSet.nbAbsMut);
 		spinnerPropChild.setValue(brainSimuSet.keepedProportion);
 		cbOrgChild.setSelectedItem(brainSimuSet.childOrigin);
 		fitnessFunc.setText((brainSimuSet.fitness == null) ? "" : brainSimuSet.fitness.toString());
@@ -284,10 +283,10 @@ public class TrainingMenu extends JFrame {
 		mutParaRelatPanel.add(Box.createRigidArea(SPACING));
 
 		spinnerProbaMutRel = new JSpinner();
-		SpinnerFractionModel spfMR = new SpinnerFractionModel(50, true, 100000);
+		var spfMR = new SpinnerNumberModel(50,1,null,1);
 		spinnerProbaMutRel.setModel(spfMR);
 		mutParaRelatPanel.add(spinnerProbaMutRel);
-		spfMR.addChangeListener(e -> brainSimuSet.relMutDivider = spfMR.getDivider());
+		spfMR.addChangeListener(e -> brainSimuSet.nbRelMut = (int) spfMR.getValue());
 
 		evolutionPanel.add(Box.createRigidArea(SPACING));
 
@@ -341,10 +340,10 @@ public class TrainingMenu extends JFrame {
 		mutParaAbsoPanel.add(Box.createRigidArea(SPACING));
 
 		spinnerProbaMutAbs = new JSpinner();
-		SpinnerFractionModel spfAB = new SpinnerFractionModel(1000, true, 1000000);
+		var spfAB = new SpinnerNumberModel(0,0,null,1);
 		spinnerProbaMutAbs.setModel(spfAB);
 		mutParaAbsoPanel.add(spinnerProbaMutAbs);
-		spfAB.addChangeListener(e -> brainSimuSet.absMutDivider = spfAB.getDivider());
+		spfAB.addChangeListener(e -> brainSimuSet.nbAbsMut = (int) spfAB.getValue());
 	}
 
 	private void enfantsGui() {

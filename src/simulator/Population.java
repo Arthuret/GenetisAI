@@ -85,7 +85,7 @@ public class Population implements Serializable {
 			max = Math.max(max, fitnesses[i]);
 			sum += fitnesses[i];
 		}
-		old.maxFitness = max;
+		old.setNewFitness(max);
 		// System.out.println("fit:sum=" + sum + ";\tmax=" + max);
 		fitComputeTime = System.currentTimeMillis() - t;
 	}

@@ -72,6 +72,9 @@ public class SimulationManager implements Runnable {
 
 	private static DecimalFormat df1 = new DecimalFormat();// used to display memory used
 	private static DecimalFormat df2 = new DecimalFormat();// idem
+	
+	private static DecimalFormat dfFitness = new DecimalFormat();//used to display fitness on console
+	private static DecimalFormat dfIncrement = new DecimalFormat();//used to display fitness change
 
 	private SimulationDataSet tempSet;
 
@@ -83,6 +86,11 @@ public class SimulationManager implements Runnable {
 		this.tempSet = set;
 		df1.setMaximumFractionDigits(1);
 		df2.setMaximumFractionDigits(2);
+		dfFitness.setMaximumFractionDigits(4);
+		dfFitness.setMinimumFractionDigits(4);
+		dfIncrement.setMaximumFractionDigits(3);
+		dfIncrement.setMinimumFractionDigits(3);
+		dfIncrement.setPositivePrefix("+");
 	}
 
 	public boolean load(File f, JFrame parent) {
@@ -192,7 +200,9 @@ public class SimulationManager implements Runnable {
 			if (running) {
 				genStep();// perform history management only
 				// generate next generation
+				var oldFit = s.current.getOldFitness();
 				s.pop.computeFitness(s.current);
+				System.out.println("Best fitness = "+dfFitness.format(s.current.getFitness())+ "\t("+dfIncrement.format(s.current.getFitness()-oldFit)+")\told = "+dfFitness.format(oldFit));
 				nextTerrain();
 				if (restart) {
 					restart = false;

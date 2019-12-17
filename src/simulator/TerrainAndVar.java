@@ -17,7 +17,8 @@ public class TerrainAndVar implements Serializable{
 	public Terrain t;
 	public TerrainVariation tvar;
 	public History hist = null;
-	public float maxFitness = 0;
+	private float fitness = 0;
+	private float oldFitness = 0;
 	
 	public TerrainAndVar(Terrain t,TerrainVariation tvar) {
 		this.t = t;
@@ -25,6 +26,23 @@ public class TerrainAndVar implements Serializable{
 	}
 	
 	public String toString() {
-		return tvar.toString()+";"+maxFitness;
+		return tvar.toString()+";"+fitness;
+	}
+	
+	public float getFitness() {
+		return fitness;
+	}
+	
+	public float getOldFitness() {
+		return oldFitness;
+	}
+	
+	public void setNewFitness(float fit) {
+		this.fitness = fit;
+		this.oldFitness = fit;
+	}
+	
+	public void setFit(float fit) {
+		fitness = fit;
 	}
 }

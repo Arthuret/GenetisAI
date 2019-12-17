@@ -156,7 +156,7 @@ public class Matrix implements Serializable {
 	}
 	
 	/**
-	 * Pass every value in the matrix trough the given function
+	 * Pass every value in the matrix through the given function
 	 * @param function The function to apply to every element in the matrix
 	 * @param args The arguments to pass down to the function
 	 */
@@ -167,6 +167,35 @@ public class Matrix implements Serializable {
 				matrix[i][j] = function.compute(matrix[i][j],args);
 			}
 		}
+	}
+	
+	/**
+	 * Pass the designated value in the matrix through the given function
+	 * @param function The function to apply to the value
+	 * @param x The x coordinate of the value in the matrix
+	 * @param y the y coordinate of the value in the matrix
+	 * @param args The arguments to pass down to the function
+	 */
+	public void applyFunctionToValue(TfFunction function,int x,int y,Object...args) {
+		matrix[x][y] = function.compute(matrix[x][y], args);
+	}
+	
+	/**
+	 * Pass the designated value in the matrix through the given function as if all values are in one coordinate
+	 * @param function The function to apply to the value
+	 * @param index The index of the value to apply the function to, as if all values are on one axis
+	 * @param args The arguments to pass down to the function
+	 */
+	public void applyFunctionToIndex(TfFunction function,int index,Object...args) {
+		applyFunctionToValue(function,index/y,index%y,args);
+	}
+	
+	/**
+	 * The number of values in the matrix
+	 * @return x*y
+	 */
+	public int getLength() {
+		return x*y;
 	}
 	
 	/**

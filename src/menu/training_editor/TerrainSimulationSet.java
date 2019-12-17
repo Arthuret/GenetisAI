@@ -60,14 +60,14 @@ public class TerrainSimulationSet implements Serializable {
 		if(simuTerrains == null) generateTerrainList();
 		if(simuTerrains.size() == 0) throw new UnsupportedOperationException("No variation found");
 		simuTerrains.sort((a,b)->{
-			float temp = a.maxFitness-b.maxFitness;
+			float temp = a.getFitness()-b.getFitness();
 			if(temp > 0) return 1;
 			if(temp < 0) return -1;
 			return 0;
 		});
-		System.out.println(simuTerrains);
+		//System.out.println(simuTerrains);
 		for(TerrainAndVar tv:simuTerrains) {
-			tv.maxFitness*=((100-SCORE_PERCENT_REDUCTION)/100.);
+			tv.setFit(((100-SCORE_PERCENT_REDUCTION)/100f)*tv.getFitness());
 		}
 		return simuTerrains.get(0);
 	}
