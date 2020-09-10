@@ -26,7 +26,7 @@ import javax.swing.SpinnerNumberModel;
  */
 public class NeuralBrainConfig extends BrainConfigPanel {
 	private JTextField textField;
-	private JSpinner spinnerSpeed, spinnerAccel, spinnerRange;
+	private JSpinner spinnerSpeed, spinnerAccel, spinnerRange, spinnerMem;
 	private JCheckBox chckbxDistance, chckbxDirection, chckbxSpeed, chckbxWalls;
 
 	private static final float DEFAULT_MAX_SPEED = 10;
@@ -61,9 +61,9 @@ public class NeuralBrainConfig extends BrainConfigPanel {
 		add(netConf, gbc_netConf);
 		GridBagLayout gbl_netConf = new GridBagLayout();
 		gbl_netConf.columnWidths = new int[] { 0, 0, 0, 0, 0 };
-		gbl_netConf.rowHeights = new int[] { 0, 0, 0, 0, 0 };
+		gbl_netConf.rowHeights = new int[] { 0, 0, 0, 0, 0, 0 };
 		gbl_netConf.columnWeights = new double[] { 0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE };
-		gbl_netConf.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		gbl_netConf.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
 		netConf.setLayout(gbl_netConf);
 
 		JLabel lblInternalLayerSetup = new JLabel("Internal layers setup");
@@ -87,7 +87,7 @@ public class NeuralBrainConfig extends BrainConfigPanel {
 				"<html>Setup the number of hidden (internal) layers and the number of nodes in each layer<br>\r\nFormat : [Nb1];[Nb2];[Nb3]<br>\r\nExemple : 12;10<br>\r\n\tThis will produce a layer of 12 nodes and a layer of 10 nodes</html>");
 		GridBagConstraints gbc_textField = new GridBagConstraints();
 		gbc_textField.gridwidth = 4;
-		gbc_textField.insets = new Insets(0, 5, 5, 5);
+		gbc_textField.insets = new Insets(0, 5, 5, 0);
 		gbc_textField.fill = GridBagConstraints.HORIZONTAL;
 		gbc_textField.gridx = 0;
 		gbc_textField.gridy = 1;
@@ -122,7 +122,7 @@ public class NeuralBrainConfig extends BrainConfigPanel {
 		spinnerRange = new JSpinner();
 		spinnerRange.setModel(new SpinnerNumberModel(DEFAULT_RANGE, 1f, null, 1f));
 		GridBagConstraints gbc_spinner_1 = new GridBagConstraints();
-		gbc_spinner_1.insets = new Insets(0, 0, 5, 5);
+		gbc_spinner_1.insets = new Insets(0, 0, 5, 0);
 		gbc_spinner_1.fill = GridBagConstraints.HORIZONTAL;
 		gbc_spinner_1.gridx = 3;
 		gbc_spinner_1.gridy = 2;
@@ -131,7 +131,7 @@ public class NeuralBrainConfig extends BrainConfigPanel {
 		JLabel lblMaxAcceleration = new JLabel("Max Acceleration");
 		GridBagConstraints gbc_lblMaxAcceleration = new GridBagConstraints();
 		gbc_lblMaxAcceleration.anchor = GridBagConstraints.EAST;
-		gbc_lblMaxAcceleration.insets = new Insets(0, 5, 0, 5);
+		gbc_lblMaxAcceleration.insets = new Insets(0, 5, 5, 5);
 		gbc_lblMaxAcceleration.gridx = 0;
 		gbc_lblMaxAcceleration.gridy = 3;
 		netConf.add(lblMaxAcceleration, gbc_lblMaxAcceleration);
@@ -140,10 +140,27 @@ public class NeuralBrainConfig extends BrainConfigPanel {
 		spinnerAccel.setModel(new SpinnerNumberModel(DEFAULT_MAX_ACCEL, 0.1f, null, 0.1f));
 		GridBagConstraints gbc_spinner_2 = new GridBagConstraints();
 		gbc_spinner_2.fill = GridBagConstraints.HORIZONTAL;
-		gbc_spinner_2.insets = new Insets(0, 0, 0, 5);
+		gbc_spinner_2.insets = new Insets(0, 0, 5, 5);
 		gbc_spinner_2.gridx = 1;
 		gbc_spinner_2.gridy = 3;
 		netConf.add(spinnerAccel, gbc_spinner_2);
+		
+		JLabel lblMemoryCell = new JLabel("Memory Cell");
+		GridBagConstraints gbc_lblMemoryCell = new GridBagConstraints();
+		gbc_lblMemoryCell.anchor = GridBagConstraints.EAST;
+		gbc_lblMemoryCell.insets = new Insets(0, 5, 0, 5);
+		gbc_lblMemoryCell.gridx = 0;
+		gbc_lblMemoryCell.gridy = 4;
+		netConf.add(lblMemoryCell, gbc_lblMemoryCell);
+		
+		spinnerMem = new JSpinner();
+		spinnerMem.setModel(new SpinnerNumberModel(0, 0, null, 1));
+		GridBagConstraints gbc_spinnerMem = new GridBagConstraints();
+		gbc_spinnerMem.fill = GridBagConstraints.HORIZONTAL;
+		gbc_spinnerMem.insets = new Insets(0, 0, 5, 5);
+		gbc_spinnerMem.gridx = 1;
+		gbc_spinnerMem.gridy = 4;
+		netConf.add(spinnerMem, gbc_spinnerMem);
 
 		JPanel inputConf = new JPanel();
 		GridBagConstraints gbc_inputConf = new GridBagConstraints();
@@ -305,7 +322,7 @@ public class NeuralBrainConfig extends BrainConfigPanel {
 		int[] layers = getLayers();
 		return new NeuralBrainTemplate(layers, (float) spinnerSpeed.getValue(), (float) spinnerAccel.getValue(),
 				(float) spinnerRange.getValue(), chckbxDistance.isSelected(), chckbxDirection.isSelected(),
-				chckbxSpeed.isSelected(), chckbxWalls.isSelected());
+				chckbxSpeed.isSelected(), chckbxWalls.isSelected(), (int) spinnerMem.getValue());
 	}
 
 	private String reasonInvalid;// used to optimise getUnvalidReason

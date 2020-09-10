@@ -1,6 +1,7 @@
 package neural_net_matrix;
 
 import java.io.Serializable;
+import java.security.InvalidParameterException;
 import java.util.Random;
 
 /**
@@ -10,7 +11,7 @@ import java.util.Random;
  */
 public class Matrix implements Serializable {
 	private static final long serialVersionUID = 1136685684377678340L;
-	
+
 	private float[][] matrix;
 	private int x, y;
 
@@ -38,7 +39,7 @@ public class Matrix implements Serializable {
 		} else {
 			for (int i = 0; i < x; i++) {
 				for (int j = 0; j < y; j++) {
-					matrix[i][j] = rand.nextFloat() * (max-min) + min;
+					matrix[i][j] = rand.nextFloat() * (max - min) + min;
 				}
 			}
 		}
@@ -71,204 +72,246 @@ public class Matrix implements Serializable {
 	 * Constructeur le plus complet, crée une matrice de taille x,y dont les valeurs
 	 * sont fixées aléatoirement entre min et max
 	 * 
-	 * @param x Largeur de la matrice
-	 * @param y Hauteur de la matrice
+	 * @param x   Largeur de la matrice
+	 * @param y   Hauteur de la matrice
 	 * @param max La valeur maximale attribuable aux cases
 	 * @param min La valeur minimale attribuable aux cases
 	 */
 	public Matrix(int x, int y, float max, float min) {
 		this(x, y, max, min, new Random());
 	}
-	
+
 	/**
 	 * Perform a matrix multiplication this*mat and retrieve the resulting matrix
 	 * The operands are untouched
+	 * 
 	 * @param mat The Matrix to be multiplied
 	 * @return The Matrix resulting from this*mat
 	 * @throws UnsupportedOperationException when the matrix sizes doesnt correspond
 	 */
-	public Matrix multiply(Matrix mat) throws UnsupportedOperationException{
-		//TODO multithread
-		if(this.x != mat.y) throw new UnsupportedOperationException("Matrix sizes doesn't correspond");
-		Matrix resp = new Matrix(mat.x,this.y,0);
-		
-		//on balaye toutes les cases de la nouvelle matrice
-		for(int i = 0;i < resp.y;i++) {
-			for(int j = 0;j < resp.x;j++) {
-				//on fait le multipladd
+	public Matrix multiply(Matrix mat) throws UnsupportedOperationException {
+		// TODO multithread
+		if (this.x != mat.y)
+			throw new UnsupportedOperationException("Matrix sizes doesn't correspond");
+		Matrix resp = new Matrix(mat.x, this.y, 0);
+
+		// on balaye toutes les cases de la nouvelle matrice
+		for (int i = 0; i < resp.y; i++) {
+			for (int j = 0; j < resp.x; j++) {
+				// on fait le multipladd
 				float temp = 0;
-				for(int k = 0;k < this.x;k++) {
-					temp += this.matrix[k][i]*mat.matrix[j][k];
+				for (int k = 0; k < this.x; k++) {
+					temp += this.matrix[k][i] * mat.matrix[j][k];
 				}
 				resp.matrix[j][i] = temp;
 			}
 		}
 		return resp;
 	}
-	
+
 	/**
-	 * Perform a multiplication term by term of the matrix elements and retrieve the resulting matrix
-	 * The operands are untouched
+	 * Perform a multiplication term by term of the matrix elements and retrieve the
+	 * resulting matrix The operands are untouched
+	 * 
 	 * @param mat The matrix to multiply with
 	 * @return A new Matrix with each term (i,j) = this(i,j)*mat(i,j)
-	 * @throws UnsupportedOperationException when the matrix sizes doesn't correspond
+	 * @throws UnsupportedOperationException when the matrix sizes doesn't
+	 *                                       correspond
 	 */
-	public Matrix multipliyTerm(Matrix mat) throws UnsupportedOperationException{
-		if(this.x != mat.x || this.y != mat.y) throw new UnsupportedOperationException("Matrix sizes doesn't match");
-		Matrix resp = new Matrix(x,y,0);
-		for(int i = 0;i < x;i++) {
-			for(int j = 0;j < y;j++) {
-				resp.matrix[i][j] = this.matrix[i][j]*mat.matrix[i][j];
+	public Matrix multipliyTerm(Matrix mat) throws UnsupportedOperationException {
+		if (this.x != mat.x || this.y != mat.y)
+			throw new UnsupportedOperationException("Matrix sizes doesn't match");
+		Matrix resp = new Matrix(x, y, 0);
+		for (int i = 0; i < x; i++) {
+			for (int j = 0; j < y; j++) {
+				resp.matrix[i][j] = this.matrix[i][j] * mat.matrix[i][j];
 			}
 		}
 		return resp;
 	}
-	
+
 	/**
 	 * Perform a term by term add operation and retrieve the resulting matrix
+	 * 
 	 * @param mat The lmatrix to add with
 	 * @return A new Matrix with each term (i,j) = this(i,j)+mat(i,j)
-	 * @throws UnsupportedOperationException when the matrix sizes doesn't correspond
+	 * @throws UnsupportedOperationException when the matrix sizes doesn't
+	 *                                       correspond
 	 */
-	public Matrix add(Matrix mat) throws UnsupportedOperationException{
-		//TODO multithread
-		if(x != mat.x || y != mat.y) throw new UnsupportedOperationException("Matrixes of different sizes cannot be added");
-		Matrix resp = new Matrix(x,y,0);
-		
-		//on balaye toutes les cases de la nouvelle matrice
-		for(int i = 0;i < resp.x;i++) {
-			for(int j = 0;j < resp.y;j++) {
-				resp.matrix[i][j] = matrix[i][j]+mat.matrix[i][j];
+	public Matrix add(Matrix mat) throws UnsupportedOperationException {
+		// TODO multithread
+		if (x != mat.x || y != mat.y)
+			throw new UnsupportedOperationException("Matrixes of different sizes cannot be added");
+		Matrix resp = new Matrix(x, y, 0);
+
+		// on balaye toutes les cases de la nouvelle matrice
+		for (int i = 0; i < resp.x; i++) {
+			for (int j = 0; j < resp.y; j++) {
+				resp.matrix[i][j] = matrix[i][j] + mat.matrix[i][j];
 			}
 		}
 		return resp;
 	}
-	
+
 	public String toString() {
 		String resp = "";
-		for(int i = 0;i < y;i++) {
-			for(int j = 0;j < x;j++) {
-				resp+=matrix[j][i]+"\t";
+		for (int i = 0; i < y; i++) {
+			for (int j = 0; j < x; j++) {
+				resp += matrix[j][i] + "\t";
 			}
-			resp+="\n";
+			resp += "\n";
 		}
 		return resp;
 	}
-	
+
 	/**
 	 * Pass every value in the matrix through the given function
+	 * 
 	 * @param function The function to apply to every element in the matrix
-	 * @param args The arguments to pass down to the function
+	 * @param args     The arguments to pass down to the function
 	 */
-	public void applyFunction(TfFunction function,Object...args) {
-		//TODO multithread
-		for(int i = 0;i < x;i++) {
-			for(int j = 0;j < y;j++) {
-				matrix[i][j] = function.compute(matrix[i][j],args);
+	public void applyFunction(TfFunction function, Object... args) {
+		// TODO multithread
+		for (int i = 0; i < x; i++) {
+			for (int j = 0; j < y; j++) {
+				matrix[i][j] = function.compute(matrix[i][j], args);
 			}
 		}
 	}
-	
+
 	/**
 	 * Pass the designated value in the matrix through the given function
+	 * 
 	 * @param function The function to apply to the value
-	 * @param x The x coordinate of the value in the matrix
-	 * @param y the y coordinate of the value in the matrix
-	 * @param args The arguments to pass down to the function
+	 * @param x        The x coordinate of the value in the matrix
+	 * @param y        the y coordinate of the value in the matrix
+	 * @param args     The arguments to pass down to the function
 	 */
-	public void applyFunctionToValue(TfFunction function,int x,int y,Object...args) {
+	public void applyFunctionToValue(TfFunction function, int x, int y, Object... args) {
 		matrix[x][y] = function.compute(matrix[x][y], args);
 	}
-	
+
 	/**
-	 * Pass the designated value in the matrix through the given function as if all values are in one coordinate
+	 * Pass the designated value in the matrix through the given function as if all
+	 * values are in one coordinate
+	 * 
 	 * @param function The function to apply to the value
-	 * @param index The index of the value to apply the function to, as if all values are on one axis
-	 * @param args The arguments to pass down to the function
+	 * @param index    The index of the value to apply the function to, as if all
+	 *                 values are on one axis
+	 * @param args     The arguments to pass down to the function
 	 */
-	public void applyFunctionToIndex(TfFunction function,int index,Object...args) {
-		applyFunctionToValue(function,index/y,index%y,args);
+	public void applyFunctionToIndex(TfFunction function, int index, Object... args) {
+		applyFunctionToValue(function, index / y, index % y, args);
 	}
-	
+
 	/**
 	 * The number of values in the matrix
+	 * 
 	 * @return x*y
 	 */
 	public int getLength() {
-		return x*y;
+		return x * y;
 	}
-	
+
 	/**
 	 * Create a data copy of the matrix
+	 * 
 	 * @return A new independant matrix with the same data
 	 */
 	public Matrix copy() {
-		Matrix resp = new Matrix(x,y,0);
-		for(int i = 0;i < x;i++) {
-			for(int j = 0;j < y;j++) {
+		Matrix resp = new Matrix(x, y, 0);
+		for (int i = 0; i < x; i++) {
+			for (int j = 0; j < y; j++) {
 				resp.matrix[i][j] = matrix[i][j];
 			}
 		}
 		return resp;
 	}
-	
+
 	/**
 	 * Create a column matrix given the values
+	 * 
 	 * @param values The values to put in the matrix
 	 * @return A new matrix of size 1,values.length
 	 */
 	public static Matrix getColumnMatrix(float[] values) {
-		Matrix resp = new Matrix(1,values.length,0);
-		for(int i = 0;i < values.length;i++)
+		Matrix resp = new Matrix(1, values.length, 0);
+		for (int i = 0; i < values.length; i++)
 			resp.matrix[0][i] = values[i];
 		return resp;
 	}
-	
+
 	/**
 	 * Create a tab with the content of the column
+	 * 
 	 * @return A float[] containing the column of the matrix
 	 * @throws UnsupportedOperationException when the matrix isn't a column
 	 */
-	public float[] getColumn() throws UnsupportedOperationException{
-		if(x != 1) throw new UnsupportedOperationException("The Matrix isn't one column");
+	public float[] getColumn() throws UnsupportedOperationException {
+		if (x != 1)
+			throw new UnsupportedOperationException("The Matrix isn't one column");
 		float[] resp = new float[y];
-		for(int i = 0;i < y;i++) {
+		for (int i = 0; i < y; i++) {
 			resp[i] = matrix[0][i];
 		}
 		return resp;
 	}
-	
+
 	public int getX() {
 		return x;
 	}
-	
+
 	public int getY() {
 		return y;
 	}
-	
+
 	/**
 	 * Perform a mathematical transpose operation
+	 * 
 	 * @return A new matrix M^(T)
 	 */
 	public Matrix transpose() {
-		Matrix resp = new Matrix(y,x,0);
-		for(int i = 0;i < x;i++) {
-			for(int j = 0;j < y;j++) {
+		Matrix resp = new Matrix(y, x, 0);
+		for (int i = 0; i < x; i++) {
+			for (int j = 0; j < y; j++) {
 				resp.matrix[j][i] = matrix[i][j];
 			}
 		}
 		return resp;
 	}
-	
+
+	/**
+	 * Create a bigger Matrix containing all the values of the current matrix, and 0
+	 * in the new space
+	 * 
+	 * @param x The width of the new Matrix, have to be larger than the current
+	 *          Matrix
+	 * @param y The height of the new Matrix, have to be taller than the current
+	 *          Matrix
+	 * @return The newly created, independant matrix.
+	 */
+	public Matrix augment(int x, int y) {
+		if (x < this.x || y < this.y)
+			throw new InvalidParameterException("The augmented matrix have to be bigger than the original matrix");
+		Matrix resp = new Matrix(x, y, 0f);
+		for (int i = 0; i < this.x; i++) {
+			for (int j = 0; j < this.y; j++) {
+				resp.matrix[i][j] = matrix[i][j];
+			}
+		}
+		return resp;
+	}
+
 	/**
 	 * Used to test different function of this class
 	 */
 	public static void main(String args[]) {
-		Matrix a = new Matrix(1,3);
+		Matrix a = new Matrix(1, 3);
 		a.matrix[0][0] = 1;
 		a.matrix[0][1] = 2;
 		a.matrix[0][2] = 3;
-		Matrix b = new Matrix(1,1);
+		System.out.println(a.augment(2, 4));
+		Matrix b = new Matrix(1, 1);
 		b.matrix[0][0] = 2;
 		System.out.println(a);
 		System.out.println(b);

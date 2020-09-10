@@ -7,8 +7,9 @@ import neural_net_matrix.Matrix;
 import neural_net_matrix.SigmoidFunction;
 
 /**
- * The configuration of a neural brain. Can generate a new random NeuralBrainData.
- * Does not contain the datas of a functionnal brain
+ * The configuration of a neural brain. Can generate a new random
+ * NeuralBrainData. Does not contain the datas of a functionnal brain
+ * 
  * @author Arthur France
  */
 public class NeuralBrainTemplate extends BrainTemplate {
@@ -17,12 +18,13 @@ public class NeuralBrainTemplate extends BrainTemplate {
 	private int[] internalLayers;
 	private float maxSpeed, maxAccel, sensorRange;
 	private boolean distance, direction, speed, walls;
+	private int nbMemory;
 	private transient Matrix inputMatrix = null;
 	private transient Matrix outputFactor = null;
 	private transient Matrix outputOffset = null;
 
 	public NeuralBrainTemplate(int[] internalLayers, float maxSpeed, float maxAccel, float sensorRange,
-			boolean distance, boolean direction, boolean speed, boolean walls) {
+			boolean distance, boolean direction, boolean speed, boolean walls, int nbMemory) {
 		super();
 		this.internalLayers = internalLayers;
 		this.maxSpeed = maxSpeed;
@@ -98,9 +100,17 @@ public class NeuralBrainTemplate extends BrainTemplate {
 		this.walls = walls;
 	}
 
+	public int getNbMemory() {
+		return nbMemory;
+	}
+
+	public void setNbMemory(int nb) {
+		nbMemory = nb;
+	}
+
 	public String toString() {
-		return "NeuralBrainTemplate:S" + maxSpeed + "a" + maxAccel + "r" + sensorRange + "D" + distance + "d"
-				+ direction + "s" + speed + "w" + walls;
+		return "NeuralBrainTemplate:S" + maxSpeed + "a" + maxAccel + "r" + sensorRange + "m" + nbMemory + "D" + distance
+				+ "d" + direction + "s" + speed + "w" + walls;
 	}
 
 	@Override
@@ -113,7 +123,7 @@ public class NeuralBrainTemplate extends BrainTemplate {
 		for (int i = 1; i < internalLayers.length; i++) {
 			resp += (internalLayers[i - 1] + 1) * internalLayers[i];
 		}
-		resp += (internalLayers[internalLayers.length - 1] + 1) * 2;// 2 outputs
+		resp += (internalLayers[internalLayers.length - 1] + 1) * getNumberOutputs();// 2 outputs
 		return resp;
 	}
 
@@ -135,7 +145,15 @@ public class NeuralBrainTemplate extends BrainTemplate {
 			nbIn += 2;
 		if (walls)
 			nbIn += 8;
+		nbIn += nbMemory;
 		return nbIn;
+	}
+	
+	/**
+	 * @return The number of inputs of the brain
+	 */
+	private int getNumberOutputs() {
+		return nbMemory + 2;
 	}
 
 	@Override
@@ -145,7 +163,7 @@ public class NeuralBrainTemplate extends BrainTemplate {
 		for (int i = 0; i < internalLayers.length; i++) {
 			sizes[i + 1] = internalLayers[i];
 		}
-		sizes[sizes.length - 1] = 2;// 2 outputs;
+		sizes[sizes.length - 1] = getNumberOutputs();
 		if (inputMatrix == null)
 			generateInputOutputMatrix();
 		return new NeuralBrainData(this, SigmoidFunction.get(), inputMatrix, outputFactor, outputOffset, sizes);
