@@ -15,11 +15,16 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 import formula.Formula;
+import formula.Variables;
 
 @SuppressWarnings("serial")
 public class FormulaEditor extends JDialog {
@@ -105,8 +110,47 @@ public class FormulaEditor extends JDialog {
 				});
 			}
 		}
+		
+		JMenuBar jmb = new JMenuBar();
+		JMenu h = new JMenu("?");
+		jmb.add(h);
+		
+		JMenuItem helpForBtn = new JMenuItem("Help Formula");
+		h.add(helpForBtn);
+		helpForBtn.addActionListener(e->showHelpFormula());
+		
+		JMenuItem helpVarBtn = new JMenuItem("Help Variables");
+		h.add(helpVarBtn);
+		helpVarBtn.addActionListener(e->showHelpVar());
+		
+		
+		this.setJMenuBar(jmb);
+		
 		this.pack();
 		this.setLocationRelativeTo(parent);
+	}
+	
+	private void showHelpVar() {
+		String message = "<html>";
+		for(Variables v : Variables.values()) {
+			message+="<b>"+v+":</b> "+v.getDescription()+"<br/>";
+		}
+		message+="</html>";
+		JOptionPane.showMessageDialog(this, message, "Help Variables", JOptionPane.INFORMATION_MESSAGE);
+	}
+	
+	private void showHelpFormula() {
+		String message = "<html>"
+				+ "A formula is a simple mathematical equation "
+				+ "describing a calculation executed automatically during the simulation<br/>"
+				+ "The fitness formula is executed for each dot at the end of each generation to estimate it's score.<br/>"
+				+ "The higher score, the better performance.<br/>"
+				+ "The higher the score relative to the total score of the population , the higher the chance to give an offspring for the next generation.<br/>"
+				+ "<br/>The 4 basic maths operands are usable (+,-,*,/) as well as positive numbers (0-x works).<br/>"
+				+ "The math priority apply for those operands, so parenthesis can be used to force operation orders.<br/>"
+				+ "The variables are marked by a '$' and are written using captial letters : '$DISTANCE'.";
+		message += "</html>";
+		JOptionPane.showMessageDialog(this, message, "Help Formula", JOptionPane.INFORMATION_MESSAGE);
 	}
 	
 	private boolean extractFormula() {
