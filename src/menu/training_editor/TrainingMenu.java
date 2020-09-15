@@ -403,9 +403,9 @@ public class TrainingMenu extends JFrame {
 	private void editFitness() {
 		FormulaEditor fedit;
 		if (brainSimuSet.fitness == null)
-			fedit = new FormulaEditor(this, "");
+			fedit = new FormulaEditor(this, "",FormulaTypes.FITNESS);
 		else
-			fedit = new FormulaEditor(this, brainSimuSet.fitness);
+			fedit = new FormulaEditor(this, brainSimuSet.fitness,FormulaTypes.FITNESS);
 		Formula fo = fedit.showDialog();
 		if (fo != null) {
 			brainSimuSet.fitness = fo;

@@ -22,7 +22,15 @@ public class Context {
 		this.tvar = tvar;
 	}
 	
-	public float getVariable(Variables v) {
+	public float getVariable(Variable v) {
+		if(v instanceof FitVariables)
+			return getVariableFit((FitVariables) v);
+		if(v instanceof MutVariables)
+			return getVariableMut((MutVariables) v);
+		return 0;
+	}
+	
+	public float getVariableFit(FitVariables v) {
 		switch(v) {
 		case DEAD:
 			return (d.isDead())?1f:0f;
@@ -42,23 +50,7 @@ public class Context {
 		return 0f;
 	}
 	
-	/*public float getVariable(Variables v) {//debug
-		switch(v) {
-		case DEAD:
-			return 1f;
-		case DISTANCE:
-			return 100f;
-		case MAX_DISTANCE:
-			return 1000f;
-		case MAX_SPEED:
-			return 20f;
-		case NB_STEPS:
-			return 25f;
-		case SPEED:
-			return 5f;
-		case WIN:
-			return 1f;
-		}
-		return 0f;
-	}*/
+	public float getVariableMut(MutVariables v) {
+		return 0;
+	}
 }

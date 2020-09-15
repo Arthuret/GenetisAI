@@ -1,6 +1,6 @@
 package formula;
 
-public enum Variables {
+public enum FitVariables implements Variable{
 	DISTANCE("Distance to the objective (pixels)"),
 	SPEED("The speed of the dot at it's last move (just before it wins or die) (pixels/step)"),
 	NB_STEPS("The number of steps the dot played (before it wins or die)"),
@@ -11,7 +11,7 @@ public enum Variables {
 	
 	private String description;
 	
-	Variables(String description) {
+	FitVariables(String description) {
 		this.description = description;
 	}
 	

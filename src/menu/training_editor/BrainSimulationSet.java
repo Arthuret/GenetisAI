@@ -22,7 +22,7 @@ public class BrainSimulationSet implements Serializable {
 
 	public BrainSimulationSet() {
 		try {
-			fitness = Formula.parse(DEFAULT_FIT);
+			fitness = Formula.parse(DEFAULT_FIT,FormulaTypes.FITNESS);
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}

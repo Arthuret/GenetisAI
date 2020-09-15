@@ -24,7 +24,7 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 import formula.Formula;
-import formula.Variables;
+import formula.Variable;
 
 @SuppressWarnings("serial")
 public class FormulaEditor extends JDialog {
@@ -35,15 +35,17 @@ public class FormulaEditor extends JDialog {
 	private static String ALLOWED_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_$1234567890.()+-*/abcdefghijklmnopqrstuvwxyz";
 	private Formula f;
 	private boolean sendData = false;
+	private FormulaTypes type;
 
 	/**
 	 * Create the dialog.
 	 */
-	public FormulaEditor(JFrame parent,Formula f) {
-		this(parent,f.toString().replaceAll(" ", ""));
+	public FormulaEditor(JFrame parent,Formula f,FormulaTypes type) {
+		this(parent,f.toString().replaceAll(" ", ""),type);
 	}
-	public FormulaEditor(JFrame parent,String function) {
+	public FormulaEditor(JFrame parent,String function,FormulaTypes type) {
 		super(parent,true);
+		this.type = type;
 		this.setMinimumSize(new Dimension(400,200));
 		Font font = new Font("Courier",0,16);
 		textF = new JTextField(function);
@@ -132,7 +134,7 @@ public class FormulaEditor extends JDialog {
 	
 	private void showHelpVar() {
 		String message = "<html>";
-		for(Variables v : Variables.values()) {
+		for(Variable v : type.getValues()) {
 			message+="<b>"+v+":</b> "+v.getDescription()+"<br/>";
 		}
 		message+="</html>";
@@ -155,7 +157,7 @@ public class FormulaEditor extends JDialog {
 	
 	private boolean extractFormula() {
 		try {
-			f = Formula.parse(textF.getText());
+			f = Formula.parse(textF.getText(), type);
 			labelError.setForeground(Color.BLACK);
 			labelError.setText(f.toString());
 			return true;
