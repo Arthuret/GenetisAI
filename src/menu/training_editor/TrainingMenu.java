@@ -56,7 +56,7 @@ public class TrainingMenu extends JFrame {
 	private JTextField brainTemplateNameTF;
 	private JSpinner spinnerPopSize;
 	private JLabel lblParameterNumber;
-	private JSpinner spinnerProbaMutRel;
+	private JTextField mutaFunc;
 	private JComboBox<ChangementLaws> cbChangLaw;
 	private JSpinner spinnerSigma;
 	private JSpinner spinnerProbaMutAbs;
@@ -98,7 +98,7 @@ public class TrainingMenu extends JFrame {
 			btnNewBrain.setText("New");
 		}
 		spinnerPopSize.setValue(brainSimuSet.populationSize);
-		spinnerProbaMutRel.setValue(brainSimuSet.nbRelMut);
+		mutaFunc.setText((brainSimuSet.mutation == null) ? "" : brainSimuSet.mutation.toString());
 		cbChangLaw.setSelectedItem(brainSimuSet.changeLaw);
 		spinnerSigma.setValue(brainSimuSet.sigma);
 		spinnerProbaMutAbs.setValue(brainSimuSet.nbAbsMut);
@@ -282,11 +282,16 @@ public class TrainingMenu extends JFrame {
 
 		mutParaRelatPanel.add(Box.createRigidArea(SPACING));
 
-		spinnerProbaMutRel = new JSpinner();
-		var spfMR = new SpinnerNumberModel(50,1,null,1);
-		spinnerProbaMutRel.setModel(spfMR);
-		mutParaRelatPanel.add(spinnerProbaMutRel);
-		spfMR.addChangeListener(e -> brainSimuSet.nbRelMut = (int) spfMR.getValue());
+		mutaFunc = new JTextField();
+		mutaFunc.setEditable(false);
+		mutaFunc.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2)
+					editMutation();
+			}
+		});
+		mutParaRelatPanel.add(mutaFunc);
 
 		evolutionPanel.add(Box.createRigidArea(SPACING));
 
@@ -340,10 +345,23 @@ public class TrainingMenu extends JFrame {
 		mutParaAbsoPanel.add(Box.createRigidArea(SPACING));
 
 		spinnerProbaMutAbs = new JSpinner();
-		var spfAB = new SpinnerNumberModel(0,0,null,1);
+		var spfAB = new SpinnerNumberModel(0, 0, null, 1);
 		spinnerProbaMutAbs.setModel(spfAB);
 		mutParaAbsoPanel.add(spinnerProbaMutAbs);
 		spfAB.addChangeListener(e -> brainSimuSet.nbAbsMut = (int) spfAB.getValue());
+	}
+
+	private void editMutation() {
+		FormulaEditor fedit;
+		if (brainSimuSet.mutation == null)
+			fedit = new FormulaEditor(this, "", FormulaTypes.MUTATION);
+		else
+			fedit = new FormulaEditor(this, brainSimuSet.mutation, FormulaTypes.MUTATION);
+		Formula fo = fedit.showDialog();
+		if (fo != null) {
+			brainSimuSet.mutation = fo;
+			initializeDatas();
+		}
 	}
 
 	private void enfantsGui() {
@@ -403,9 +421,9 @@ public class TrainingMenu extends JFrame {
 	private void editFitness() {
 		FormulaEditor fedit;
 		if (brainSimuSet.fitness == null)
-			fedit = new FormulaEditor(this, "",FormulaTypes.FITNESS);
+			fedit = new FormulaEditor(this, "", FormulaTypes.FITNESS);
 		else
-			fedit = new FormulaEditor(this, brainSimuSet.fitness,FormulaTypes.FITNESS);
+			fedit = new FormulaEditor(this, brainSimuSet.fitness, FormulaTypes.FITNESS);
 		Formula fo = fedit.showDialog();
 		if (fo != null) {
 			brainSimuSet.fitness = fo;
@@ -876,6 +894,10 @@ public class TrainingMenu extends JFrame {
 		}
 		if (brainSimuSet.fitness == null) {
 			JOptionPane.showMessageDialog(this, "Empty fitness is not allowed", "Error in simulation launching",
+					JOptionPane.ERROR_MESSAGE);
+		}
+		if (brainSimuSet.mutation == null) {
+			JOptionPane.showMessageDialog(this, "Empty mutation is not allowed", "Error in simulation launching",
 					JOptionPane.ERROR_MESSAGE);
 		}
 		SimulationManager m = new SimulationManager(dataSet);

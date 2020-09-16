@@ -75,17 +75,17 @@ public class Population implements Serializable {
 	 * 
 	 * @param old the TerrainAndVar of the just passed simulation
 	 */
-	public void computeFitness(TerrainAndVar old) {
+	public void computeFitness(SimuState oldS) {
 		long t = System.currentTimeMillis();
 		fitnesses = new float[pop.length];
 		max = 0;
 		sum = 0;
 		for (int i = 0; i < pop.length; i++) {
-			fitnesses[i] = pop[i].computeFitness(s.set.brainSimuSet.fitness, old);
+			fitnesses[i] = pop[i].computeFitness(s.set.brainSimuSet.fitness, oldS);
 			max = Math.max(max, fitnesses[i]);
 			sum += fitnesses[i];
 		}
-		old.setNewFitness(max);
+		oldS.current.setNewFitness(max);
 		// System.out.println("fit:sum=" + sum + ";\tmax=" + max);
 		fitComputeTime = System.currentTimeMillis() - t;
 	}
@@ -113,6 +113,7 @@ public class Population implements Serializable {
 					}
 				}
 			}
+			s.set.brainSimuSet.computeMutation(s);
 			for (Dot d : newPop) {
 				d.getBrain().mutate(s.set.brainSimuSet);
 			}
@@ -314,5 +315,22 @@ public class Population implements Serializable {
 				return false;
 		}
 		return true;
+	}
+	
+	public int getNumberWin() {
+		int resp = 0;
+		for(Dot d : pop) {
+			if(d.isWin())
+				resp++;
+		}
+		return resp;
+	}
+	
+	public float getMeanFitness() {
+		float total = 0;
+		for(float f : fitnesses) {
+			total += f;
+		}
+		return total/fitnesses.length;
 	}
 }

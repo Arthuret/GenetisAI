@@ -118,10 +118,10 @@ public class NeuralBrainData implements BrainData {
 		TfFunction rel = new Limiter((e,a) -> relativeMutation(e,a), -1, 1);
 		
 		applyFunctionRandom(set,set.nbAbsMut,abs,set);
-		applyFunctionRandom(set,set.nbRelMut,rel,set);
+		applyFunctionRandom(set,set.getMutaChance(),rel,set);
 	}
 	
-	private void applyFunctionRandom(BrainSimulationSet set,int number,TfFunction f,Object...args) {
+	private void applyFunctionRandom(BrainSimulationSet set,float number,TfFunction f,Object...args) {
 		var nbPara = template.getNumberParameters();
 		var rand = new Random();
 		for(var i = 0;i < number;i++) {

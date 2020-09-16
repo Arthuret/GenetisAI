@@ -1,25 +1,22 @@
 package formula;
 
 import simulator.Dot;
-import simulator.TerrainAndVar;
+import simulator.SimuState;
 import tools.math.Vector;
 
 public class Context {
 	
 	private Dot d;
-	private TerrainAndVar tvar;
+	private SimuState sState;
 	
-	public Context(Dot d,TerrainAndVar tvar) {
+	public Context(Dot d, SimuState sState) {
 		this.d = d;
-		this.tvar = tvar;
+		this.sState = sState;
 	}
 	
-	public void setDot(Dot d) {
-		this.d = d;
-	}
-	
-	public void setTVar(TerrainAndVar tvar) {
-		this.tvar = tvar;
+	public Context(SimuState s) {
+		this.sState = s;
+		this.d = null;
 	}
 	
 	public float getVariable(Variable v) {
@@ -35,9 +32,9 @@ public class Context {
 		case DEAD:
 			return (d.isDead())?1f:0f;
 		case DISTANCE:
-			return (float) Vector.distance(tvar.tvar.getGoal().getPosition(),d.getPosition());
+			return (float) Vector.distance(sState.current.tvar.getGoal().getPosition(),d.getPosition());
 		case MAX_DISTANCE:
-			return (float) tvar.t.getWalls().getAmplitude();
+			return (float) sState.current.t.getWalls().getAmplitude();
 		case MAX_SPEED:
 			return d.getBrain().getSpeedLimit();
 		case NB_STEPS:
@@ -51,6 +48,24 @@ public class Context {
 	}
 	
 	public float getVariableMut(MutVariables v) {
+		switch(v) {
+		case IS_WIN:
+			return (sState.pop.getNumberWin() > 0)?1:0;
+		case NB_WIN:
+			return sState.pop.getNumberWin();
+		case MAX_FIT_LAST:
+			return sState.current.getOldFitness();
+		case MAX_FIT:
+			return sState.current.getFitness();
+		case MEAN_FIT:
+			return sState.pop.getMeanFitness();
+		case NB_GEN:
+			return sState.genNumber+1;
+		case POP_SIZE:
+			return sState.set.brainSimuSet.populationSize;
+		default:
+			break;
+		}
 		return 0;
 	}
 }

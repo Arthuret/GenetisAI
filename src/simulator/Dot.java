@@ -100,8 +100,8 @@ public class Dot implements Serializable {
 	 * @param tvar the TerrainAndVar of the just passed simulation
 	 * @return The fitness score of the Dot
 	 */
-	public float computeFitness(Formula f, TerrainAndVar tvar) {
-		Context c = new Context(this, tvar);
+	public float computeFitness(Formula f, SimuState s) {
+		Context c = new Context(this, s);
 		float fit = f.getValue(c);
 		return Math.max(fit, MINIMUM_POINTS);
 	}

@@ -201,7 +201,7 @@ public class SimulationManager implements Runnable {
 				genStep();// perform history management only
 				// generate next generation
 				var oldFit = s.current.getOldFitness();
-				s.pop.computeFitness(s.current);
+				s.pop.computeFitness(s);
 				System.out.println("Best fitness = "+dfFitness.format(s.current.getFitness())+ "\t("+dfIncrement.format(s.current.getFitness()-oldFit)+")\told = "+dfFitness.format(oldFit));
 				nextTerrain();
 				if (restart) {
@@ -610,7 +610,7 @@ public class SimulationManager implements Runnable {
 	 * @param nb the number of brains to save
 	 */
 	private void saverBrain(File f, int nb) {
-		s.pop.computeFitness(s.current);
+		s.pop.computeFitness(s);
 		List<Dot> dots = s.pop.getDotsRanked();
 		List<Dot> l = new ArrayList<>();
 		for (int i = 0; i < nb; i++)
