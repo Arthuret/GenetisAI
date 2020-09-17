@@ -37,6 +37,20 @@ public class FormulaEditor extends JDialog {
 	private boolean sendData = false;
 	private FormulaTypes type;
 
+	private String helpMessage = "<html>" + "A formula is a simple mathematical equation "
+			+ "describing a calculation executed automatically during the simulation<br/>"
+			+ "The fitness formula is executed for each dot at the end of each generation to estimate it's score.<br/>"
+			+ "The higher score, the better performance.<br/>"
+			+ "The higher the score relative to the total score of the population , the higher the chance to give an offspring for the next generation.<br/>"
+			+ "<br/>The 4 basic maths operands are usable (+,-,*,/).<br/>"
+			+ "All operations are performed using floating point values.<br/>"
+			+ "The numbers ignore completely the underscores '_', but teir placements are memorized.<br/>"
+			+ "The math priority apply for those operands, so parenthesis can be used to force operation orders.<br/>"
+			+ "Pluses and minuses will be optimized;<br/>"
+			+ "A minus on a parenthesis containing adds (or minus) operations will open the parenthesis and minus all elements.<br/>"
+			+ "The variables are marked by a '$' and are written using captial letters : '$DISTANCE'."
+			+ "</html>";
+
 	/**
 	 * Create the dialog.
 	 */
@@ -142,17 +156,7 @@ public class FormulaEditor extends JDialog {
 	}
 
 	private void showHelpFormula() {
-		String message = "<html>" + "A formula is a simple mathematical equation "
-				+ "describing a calculation executed automatically during the simulation<br/>"
-				+ "The fitness formula is executed for each dot at the end of each generation to estimate it's score.<br/>"
-				+ "The higher score, the better performance.<br/>"
-				+ "The higher the score relative to the total score of the population , the higher the chance to give an offspring for the next generation.<br/>"
-				+ "<br/>The 4 basic maths operands are usable (+,-,*,/) as well as positive numbers (0-x works).<br/>"
-				+ "All operations are performed using floating point values.<br/>"
-				+ "The math priority apply for those operands, so parenthesis can be used to force operation orders.<br/>"
-				+ "The variables are marked by a '$' and are written using captial letters : '$DISTANCE'.";
-		message += "</html>";
-		JOptionPane.showMessageDialog(this, message, "Help Formula", JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane.showMessageDialog(this, helpMessage, "Help Formula", JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	private boolean extractFormula() {

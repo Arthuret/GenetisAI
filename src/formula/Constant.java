@@ -40,5 +40,27 @@ public class Constant implements Element {
 	public String toString() {
 		return repr;
 	}
-
+	
+	public Constant getNegative() {
+		Constant resp = new Constant(-constant);
+		if(repr.charAt(0) == '-')
+			resp.repr = repr.substring(1);
+		else
+			resp.repr = "-"+repr;
+		return resp;
+	}
+	
+	public boolean isNegative() {
+		return constant < 0;
+	}
+	
+	public String toStringWN() {
+		if(repr.charAt(0) == '-')
+			return repr.substring(1);
+		return repr;
+	}
+	
+	public boolean hasOnlyConstOrVar() {
+		return true;
+	}
 }

@@ -55,6 +55,8 @@ public class Formula implements Serializable {
 			if (cpt < end) {
 				// extracting sign
 				char c = s.charAt(cpt);
+				if (c == ')')
+					throw new ParseException("Unmatched parenthesis", cpt);
 				if (c != '+' && c != '-' && c != '*' && c != '/')
 					throw new ParseException("Unrecognized operator", cpt);
 				signs.add(c);
@@ -112,25 +114,22 @@ public class Formula implements Serializable {
 	 * @throws ParseException
 	 */
 	private static void manageAdd(List<Element> elements, List<Character> signs) throws ParseException {
-		int i = 0;
-		while (i < signs.size()) {
-			char c = signs.get(i);
+		while (!signs.isEmpty()) {
+			char c = signs.get(0);
 			if (c == '+') {
-				Element t = new Add(elements.get(i), elements.get(i + 1));
-				elements.remove(i);
-				elements.remove(i);
-				signs.remove(i);
-				elements.add(i, t);
-			} else if (c == '-') {
-				Element t = new Substract(elements.get(i), elements.get(i + 1));
-				elements.remove(i);
-				elements.remove(i);
-				signs.remove(i);
-				elements.add(i, t);
-			} else {
-				i++;
-				System.err.println("Strange operator behavior");
-			}
+				Element t = new Add(elements.get(0), elements.get(1));
+				elements.remove(0);
+				elements.remove(0);
+				signs.remove(0);
+				elements.add(0, t);
+			} else if (c == '-') {// negting the element, and throwing it back to '+'
+				Element t = Negative.negative(elements.get(1));
+				elements.remove(1);
+				elements.add(1, t);
+				signs.remove(0);
+				signs.add(0, '+');
+			} else
+				throw new ParseException("Signs extraction error", -1);
 		}
 	}
 
@@ -144,6 +143,10 @@ public class Formula implements Serializable {
 	 * @throws ParseException When the string doesn't respect the synthax
 	 */
 	private static Element parseBlock(String s, int begin, int end, FormulaTypes type) throws ParseException {
+		if (begin == end)
+			throw new ParseException("Empty block", begin);
+		if (begin > end)
+			throw new ParseException("Negative size block", begin);
 		char c = s.charAt(begin);
 		if (c == '(')
 			return parse(s, begin + 1, end - 1, type);
@@ -151,19 +154,22 @@ public class Formula implements Serializable {
 			return VariableElement.parse(s, begin, end, type);
 		else if (Character.isDigit(c))
 			return Constant.parse(s, begin, end);
+		else if (c == '-')
+			return Negative.negative(parseBlock(s, begin + 1, end, type));
 		throw new ParseException("Unexpected element:'" + c + "'", begin);
 	}
 
 	private static int searchEndBlock(String s, int begin, int end) throws ParseException {
 		char c = s.charAt(begin);
+		if (c == '-')
+			return searchEndBlock(s, begin + 1, end);
 		if (c == '(')
 			return searchEndParenthesis(s, begin, end);
 		else if (c == '$')
 			return searchEndVariable(s, begin, end);
 		else if (Character.isDigit(c))
 			return searchEndNumber(s, begin, end);
-		return begin;
-
+		throw new ParseException("Unexpected element:'" + c + "'", begin);
 	}
 
 	private static int searchEndNumber(String s, int begin, int end) {
@@ -215,8 +221,8 @@ public class Formula implements Serializable {
 	}
 
 	public static void main(String[] args) {// debug purposes
-		// String f = "10.5/(0-2)+(((5+$DISTANCE)))*$NB_STEPS+(1+2-3+4)";
-		String f = "(1*2*3*4/5*6/7*8*9)";
+		String f = "10.5/-22+((-(5+$DISTANCE)))*$NB_STEPS-(1+2-3+4)";
+		// String f = "(1*2*3*4/5*6/7*8*9)-(-5)";
 		try {
 			Formula form = Formula.parse(f, FormulaTypes.FITNESS);
 			System.out.println(form + " OK");

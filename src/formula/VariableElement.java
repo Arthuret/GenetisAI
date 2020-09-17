@@ -41,5 +41,9 @@ public class VariableElement implements Element {
 	public String toString() {
 		return "$" + v;
 	}
+	
+	public boolean hasOnlyConstOrVar() {
+		return true;
+	}
 
 }

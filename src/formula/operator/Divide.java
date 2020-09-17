@@ -16,7 +16,8 @@ public class Divide implements Element {
 	@Override
 	public float getValue(Context c) {
 		float bv = b.getValue(c);
-		return a.getValue(c) / ((Math.abs(bv) >= 1) ? bv : Math.signum(bv));
+		if(bv == 0) return 0;
+		return a.getValue(c) / b.getValue(c);
 	}
 	
 	public String toString() {

@@ -4,6 +4,12 @@ import simulator.Dot;
 import simulator.SimuState;
 import tools.math.Vector;
 
+/**
+ * Store the context for the formula calculation
+ * Allow for the evaluation of the Variables values
+ * @author Arthur France
+ *
+ */
 public class Context {
 	
 	private Dot d;
@@ -14,7 +20,7 @@ public class Context {
 		this.sState = sState;
 	}
 	
-	public Context(SimuState s) {
+	public Context(SimuState s) {//the mutation formula doesn't need the dot int it's context
 		this.sState = s;
 		this.d = null;
 	}
