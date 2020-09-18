@@ -24,6 +24,8 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 import formula.Formula;
+import formula.FormulaTypes;
+import formula.Functions;
 import formula.Variable;
 
 @SuppressWarnings("serial")
@@ -32,7 +34,7 @@ public class FormulaEditor extends JDialog {
 	private final JPanel contentPanel = new JPanel();
 	private JTextField textF;
 	private JLabel labelError;
-	private static String ALLOWED_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_$1234567890.()+-*/abcdefghijklmnopqrstuvwxyz";
+	private static String ALLOWED_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_$1234567890.()+-*/abcdefghijklmnopqrstuvwxyz,";
 	private Formula f;
 	private boolean sendData = false;
 	private FormulaTypes type;
@@ -42,13 +44,15 @@ public class FormulaEditor extends JDialog {
 			+ "The fitness formula is executed for each dot at the end of each generation to estimate it's score.<br/>"
 			+ "The higher score, the better performance.<br/>"
 			+ "The higher the score relative to the total score of the population , the higher the chance to give an offspring for the next generation.<br/>"
-			+ "<br/>The 4 basic maths operands are usable (+,-,*,/).<br/>"
+			+ "<br/>" + "The 4 basic maths operands are usable (+,-,*,/).<br/>"
 			+ "All operations are performed using floating point values.<br/>"
 			+ "The numbers ignore completely the underscores '_', but teir placements are memorized.<br/>"
 			+ "The math priority apply for those operands, so parenthesis can be used to force operation orders.<br/>"
 			+ "Pluses and minuses will be optimized;<br/>"
 			+ "A minus on a parenthesis containing adds (or minus) operations will open the parenthesis and minus all elements.<br/>"
-			+ "The variables are marked by a '$' and are written using captial letters : '$DISTANCE'."
+			+ "<br/>" + "The variables are marked by a '$' and are written using upper-case letters : '$DISTANCE'."
+			+ "The functions are written in lower-case letters and have parameters in parenthesis, separated by commas : 'min(5,6)'"
+			+ "These parameters can be any other compenents (variables, numbers, other functions, or any combinations using operators."
 			+ "</html>";
 
 	/**
@@ -68,8 +72,6 @@ public class FormulaEditor extends JDialog {
 		textF.addKeyListener(new KeyAdapter() {
 			public void keyTyped(KeyEvent e) {
 				char c = e.getKeyChar();
-				if (Character.isAlphabetic(c))
-					e.setKeyChar(Character.toUpperCase(c));
 				boolean finded = false;
 				for (int i = 0; i < ALLOWED_CHARS.length(); i++) {
 					if (ALLOWED_CHARS.charAt(i) == c) {
@@ -85,8 +87,6 @@ public class FormulaEditor extends JDialog {
 				if (!e.isActionKey()) {
 					JTextField textField = (JTextField) e.getSource();
 					int pos = textField.getCaretPosition();
-					String text = textField.getText();
-					textField.setText(text.toUpperCase());
 					textField.setCaretPosition(pos);
 				}
 			}
@@ -140,6 +140,10 @@ public class FormulaEditor extends JDialog {
 		h.add(helpVarBtn);
 		helpVarBtn.addActionListener(e -> showHelpVar());
 
+		JMenuItem helpFuncBtn = new JMenuItem("Help Functions");
+		h.add(helpFuncBtn);
+		helpFuncBtn.addActionListener(e -> showHelpFunc());
+
 		this.setJMenuBar(jmb);
 
 		this.pack();
@@ -147,12 +151,21 @@ public class FormulaEditor extends JDialog {
 	}
 
 	private void showHelpVar() {
-		String message = "<html>";
+		String message = "<html>The variables are written in upper-case letters, perfixed with a '$'.<br/>";
 		for (Variable v : type.getValues()) {
 			message += "<b>" + v + ":</b> " + v.getDescription() + "<br/>";
 		}
 		message += "</html>";
 		JOptionPane.showMessageDialog(this, message, "Help Variables", JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	private void showHelpFunc() {
+		String message = "<html>The function's names are written in lower-case letters, and the parameters are inside parenthesis, separated by commas.<br/>";
+		for (Functions f : Functions.values()) {
+			message += "<b>" + f.getName() + ":</b> " + f.getDescription() + "<br/>";
+		}
+		message += "</html>";
+		JOptionPane.showMessageDialog(this, message, "Help Functions", JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	private void showHelpFormula() {

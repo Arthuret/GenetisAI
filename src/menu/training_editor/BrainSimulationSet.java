@@ -7,6 +7,7 @@ import java.text.ParseException;
 import brain.BrainTemplate;
 import formula.Context;
 import formula.Formula;
+import formula.FormulaTypes;
 import simulator.SimuState;
 
 public class BrainSimulationSet implements Serializable {
@@ -26,7 +27,7 @@ public class BrainSimulationSet implements Serializable {
 
 	public BrainSimulationSet() {
 		try {
-			fitness = Formula.parse(DEFAULT_FIT,FormulaTypes.FITNESS);
+			fitness = Formula.parse(DEFAULT_FIT, FormulaTypes.FITNESS);
 			mutation = Formula.parse(DEFAULT_MUT, FormulaTypes.MUTATION);
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -45,17 +46,16 @@ public class BrainSimulationSet implements Serializable {
 		resp += "fitness=" + fitness + ";";
 		return resp;
 	}
-	
-	private void readObject(ObjectInputStream ois) throws Exception{
-		//temporary measure to account for old files
+
+	private void readObject(ObjectInputStream ois) throws Exception {
+		// temporary measure to account for old files
 		ois.defaultReadObject();
 	}
-	
+
 	public void computeMutation(SimuState s) {
 		mutaChance = mutation.getValue(new Context(s));
-		System.out.println("mutaChance:"+mutaChance);
 	}
-	
+
 	public float getMutaChance() {
 		return mutaChance;
 	}

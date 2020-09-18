@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import formula.operator.*;
-import menu.training_editor.FormulaTypes;
 
 /**
  * A simple mathemaic parsing class used to contain the fitness expression.
@@ -37,8 +36,8 @@ public class Formula implements Serializable {
 	 * @return The parsed Element
 	 * @throws ParseException if the String doesn't respect the synthax
 	 */
-	private static Element parse(String s, int begin, int end, FormulaTypes type) throws ParseException {// parse one
-																											// level
+	public static Element parse(String s, int begin, int end, FormulaTypes type) throws ParseException {// parse one
+																										// level
 		// an element can be another sub-block, a number, a variable, or an operation
 		int cpt = begin;
 		List<Element> elements = new ArrayList<>();
@@ -75,6 +74,26 @@ public class Formula implements Serializable {
 		} catch (ParseException e) {
 			throw new ParseException(e.getMessage(), begin);
 		}
+	}
+
+	static int searchNextComma(String s, int begin, int end) throws ParseException {
+		if (s.charAt(begin) == ',')
+			return begin;
+		for (int i = begin; i < end; i++) {
+			switch (s.charAt(i)) {
+			case ',':
+				return i;
+			case '+':
+			case '-':
+			case '*':
+			case '/':
+				continue;
+			default:
+				i = searchEndBlock(s, i, end) - 1;
+				break;
+			}
+		}
+		return -1;
 	}
 
 	/**
@@ -156,6 +175,8 @@ public class Formula implements Serializable {
 			return Constant.parse(s, begin, end);
 		else if (c == '-')
 			return Negative.negative(parseBlock(s, begin + 1, end, type));
+		else if (Character.getType(c) == Character.LOWERCASE_LETTER)
+			return Function.parse(s, begin, end, type);
 		throw new ParseException("Unexpected element:'" + c + "'", begin);
 	}
 
@@ -169,7 +190,19 @@ public class Formula implements Serializable {
 			return searchEndVariable(s, begin, end);
 		else if (Character.isDigit(c))
 			return searchEndNumber(s, begin, end);
+		else if (Character.getType(c) == Character.LOWERCASE_LETTER)
+			return searchEndFunction(s, begin, end);
 		throw new ParseException("Unexpected element:'" + c + "'", begin);
+	}
+
+	private static int searchEndFunction(String s, int begin, int end) throws ParseException {
+		int i = begin;
+		while (s.charAt(i) != '(') {
+			i++;
+			if (i >= end)
+				throw new ParseException("'(' expected", end);
+		}
+		return searchEndParenthesis(s, i, end);
 	}
 
 	private static int searchEndNumber(String s, int begin, int end) {
@@ -221,11 +254,13 @@ public class Formula implements Serializable {
 	}
 
 	public static void main(String[] args) {// debug purposes
-		String f = "10.5/-22+((-(5+$DISTANCE)))*$NB_STEPS-(1+2-3+4)";
+		String f = "10.5/-22+((-(5+$DISTANCE)))*$NB_STEPS-(1+2-3+pow(4,2+2))";
 		// String f = "(1*2*3*4/5*6/7*8*9)-(-5)";
+		// String f = "pow(4,4)";
 		try {
 			Formula form = Formula.parse(f, FormulaTypes.FITNESS);
 			System.out.println(form + " OK");
+			// System.out.println(form.getValue(null));
 		} catch (ParseException e) {
 			System.err.println(e.getMessage());
 			System.err.println(f);

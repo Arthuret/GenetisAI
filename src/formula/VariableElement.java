@@ -2,8 +2,6 @@ package formula;
 
 import java.text.ParseException;
 
-import menu.training_editor.FormulaTypes;
-
 /**
  * A part of a formula.
  * Contain a designator to a variable
@@ -18,7 +16,7 @@ public class VariableElement implements Element {
 		this.v = v;
 	}
 
-	public static VariableElement parse(String s, int begin, int end,FormulaTypes type) throws ParseException {
+	public static VariableElement parse(String s, int begin, int end, FormulaTypes type) throws ParseException {
 		String el = s.substring(begin + 1, end);
 		try {
 			switch(type) {

@@ -72,9 +72,9 @@ public class SimulationManager implements Runnable {
 
 	private static DecimalFormat df1 = new DecimalFormat();// used to display memory used
 	private static DecimalFormat df2 = new DecimalFormat();// idem
-	
-	private static DecimalFormat dfFitness = new DecimalFormat();//used to display fitness on console
-	private static DecimalFormat dfIncrement = new DecimalFormat();//used to display fitness change
+
+	private static DecimalFormat dfFitness = new DecimalFormat();// used to display fitness on console
+	private static DecimalFormat dfIncrement = new DecimalFormat();// used to display fitness change
 
 	private SimulationDataSet tempSet;
 
@@ -202,7 +202,10 @@ public class SimulationManager implements Runnable {
 				// generate next generation
 				var oldFit = s.current.getOldFitness();
 				s.pop.computeFitness(s);
-				System.out.println("Best fitness = "+dfFitness.format(s.current.getFitness())+ "\t("+dfIncrement.format(s.current.getFitness()-oldFit)+")\told = "+dfFitness.format(oldFit));
+				s.set.brainSimuSet.computeMutation(s);
+				System.out.println("Best fitness = " + dfFitness.format(s.current.getFitness()) + "\t("
+						+ dfIncrement.format(s.current.getFitness() - oldFit) + ")\told = " + dfFitness.format(oldFit)
+						+ "\tMutChance = " + s.set.brainSimuSet.getMutaChance());
 				nextTerrain();
 				if (restart) {
 					restart = false;

@@ -42,6 +42,7 @@ import environnement.Terrain;
 import environnement.TerrainVariation;
 import environnement.TerrainVariationSet;
 import formula.Formula;
+import formula.FormulaTypes;
 import menu.MainMenu;
 import simulator.SimulationManager;
 import tools.menu.SpinnerPercentModel;
